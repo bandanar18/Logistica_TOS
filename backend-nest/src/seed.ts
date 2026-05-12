@@ -33,7 +33,7 @@ async function seed() {
     if (!role) {
       role = await roleRepo.save({ name: rName, description: `Role for ${rName}` } as any);
     }
-    roleEntities[rName] = role;
+    roleEntities[rName] = role!;
   }
   console.log('Roles seeded');
 
@@ -53,7 +53,7 @@ async function seed() {
     if (!user) {
       user = await userRepo.save({ ...u, passwordHash } as any);
     }
-    userEntities[u.email] = user;
+    userEntities[u.email] = user!;
   }
   console.log('Users seeded');
 
@@ -76,11 +76,11 @@ async function seed() {
 
   const categoryEntities: Record<string, MasterCatalogItem> = {};
   for (const c of categories) {
-    let item = await itemRepo.findOneBy({ code: c.code, catalog: { id: serviceCat.id } });
+    let item = await itemRepo.findOneBy({ code: c.code, catalog: { id: serviceCat!.id } });
     if (!item) {
       item = await itemRepo.save({ ...c, catalog: serviceCat } as any);
     }
-    categoryEntities[c.code] = item;
+    categoryEntities[c.code] = item!;
   }
 
   // Ports
@@ -96,7 +96,7 @@ async function seed() {
   ];
 
   for (const p of ports) {
-    let item = await itemRepo.findOneBy({ code: p.code, catalog: { id: portsCat.id } });
+    let item = await itemRepo.findOneBy({ code: p.code, catalog: { id: portsCat!.id } });
     if (!item) {
       await itemRepo.save({ ...p, catalog: portsCat } as any);
     }
@@ -129,7 +129,7 @@ async function seed() {
   ];
 
   for (const s of servicesData) {
-    let service = await serviceRepo.findOneBy({ code: s.code, store: { id: store.id } });
+    let service = await serviceRepo.findOneBy({ code: s.code, store: { id: store!.id } });
     if (!service) {
       await serviceRepo.save(s as any);
     }

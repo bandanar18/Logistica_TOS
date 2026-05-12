@@ -68,6 +68,19 @@ const MODULE_CONFIG = {
       new Date(p.createdAt).toLocaleDateString()
     ],
   },
+  documents: {
+    title: 'Documentos',
+    endpoint: 'documents',
+    cols: ['ID', 'Orden', 'Tipo', 'Nombre', 'Estado', 'Fecha'],
+    mapRow: (d) => [
+      `DOC-${d.id.toString().padStart(4, '0')}`,
+      d.order ? `ORD-${d.order.id.toString().padStart(4, '0')}` : '—',
+      d.type,
+      d.name,
+      d.status,
+      new Date(d.createdAt).toLocaleDateString()
+    ],
+  },
   audit: {
     title: 'Auditoría',
     endpoint: 'audit',
@@ -85,7 +98,7 @@ const MODULE_CONFIG = {
     endpoint: 'users',
     cols: ['Nombre', 'Email', 'Rol', 'Estado', 'Registro'],
     mapRow: (u) => [
-      u.name,
+      u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim(),
       u.email,
       u.role?.name || '—',
       u.isActive ? 'Activo' : 'Inactivo',
@@ -114,6 +127,31 @@ const MODULE_CONFIG = {
       `USD ${s.basePrice}`,
       s.status
     ],
+  },
+  catalogs: {
+    title: 'Catálogos Maestros',
+    endpoint: 'catalogs',
+    cols: ['Código', 'Nombre', 'Descripción', 'Items'],
+    mapRow: (c) => [c.code, c.name, c.description || '—', c.items?.length || 0],
+  },
+  commissions: {
+    title: 'Comisiones',
+    endpoint: 'commissions',
+    cols: ['ID', 'Orden', 'Tienda', 'Tasa', 'Monto', 'Estado'],
+    mapRow: (c) => [
+      `COM-${c.id.toString().padStart(4, '0')}`,
+      c.order ? `ORD-${c.order.id.toString().padStart(4, '0')}` : '—',
+      c.store?.legalName || '—',
+      `${c.rate}%`,
+      `USD ${c.amount}`,
+      c.status,
+    ],
+  },
+  reports: {
+    title: 'Reportes',
+    endpoint: 'reports',
+    cols: ['Usuarios', 'Tiendas', 'Cotizaciones', 'Órdenes', 'Pagos', 'Ingresos confirmados'],
+    mapRow: (r) => [r.users, r.stores, r.quotations, r.orders, r.payments, `USD ${r.confirmedRevenue}`],
   },
   tos: {
     title: 'Gestión de Contenedores (TOS)',
@@ -187,27 +225,92 @@ export default function GenericDashPage({ title, role, module }) {
   const [loading, setLoading] = useState(true);
   const config = MODULE_CONFIG[module] || { title, cols: ['En construcción'], mapRow: () => ['—'] };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:3000/${config.endpoint}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const result = await res.json();
-          setData(result);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const request = async (path, options = {}) => {
+    const res = await fetch(`http://localhost:3000/${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...(options.headers || {})
       }
-    };
-    if (config.endpoint) fetchData();
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json().catch(() => null);
+  };
+
+  const refresh = async () => {
+    if (!config.endpoint) return;
+    setLoading(true);
+    try {
+      setData(await request(config.endpoint));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
   }, [module, token, config.endpoint]);
 
   const rows = data.map(item => config.mapRow(item, role));
+
+  const runAction = async (label, item) => {
+    try {
+      if (module === 'quotations' && label === 'Responder') {
+        const price = prompt('Monto de la cotización en USD');
+        if (!price) return;
+        const responseNotes = prompt('Notas para el cliente') || '';
+        await request(`quotations/${item.id}/respond`, { method: 'PATCH', body: JSON.stringify({ price, responseNotes }) });
+      }
+      if (module === 'quotations' && label === 'Aprobar') {
+        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+        await request(`quotations/${item.id}/convert-to-order`, { method: 'POST' });
+      }
+      if (module === 'quotations' && label === 'Rechazar') {
+        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) });
+      }
+      if (module === 'orders') {
+        const status = label === 'Iniciar' ? 'in_progress' : label === 'Completar' ? 'completed' : 'cancelled';
+        await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      }
+      if (module === 'payments' && label === 'Confirmar') {
+        await request(`payments/${item.id}/confirm`, { method: 'PATCH' });
+      }
+      if (module === 'documents' && label === 'Validar') {
+        await request(`documents/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+      }
+      if (module === 'users') {
+        await request(`users/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive: !item.isActive }) });
+      }
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo ejecutar la acción. Revisa permisos y estado del registro.');
+    }
+  };
+
+  const getActions = (item) => {
+    if (module === 'quotations' && role === 'store' && item.status === 'pending') return ['Responder'];
+    if (module === 'quotations' && role === 'client' && item.status === 'responded') return ['Aprobar', 'Rechazar'];
+    if (module === 'orders' && role === 'store' && item.status === 'pending') return ['Iniciar', 'Cancelar'];
+    if (module === 'orders' && role === 'store' && item.status === 'in_progress') return ['Completar'];
+    if (module === 'payments' && role === 'admin' && item.status === 'pending') return ['Confirmar'];
+    if (module === 'documents' && role === 'admin' && item.status === 'pending') return ['Validar'];
+    if (module === 'users' && role === 'admin') return [item.isActive ? 'Desactivar' : 'Activar'];
+    return [];
+  };
+
+  const createDocument = async () => {
+    const orderId = prompt('ID de la orden');
+    const type = prompt('Tipo de documento (BL, factura, permiso, comprobante)');
+    const name = prompt('Nombre del documento');
+    const url = prompt('URL del archivo');
+    if (!orderId || !type || !name || !url) return;
+    await request('documents', { method: 'POST', body: JSON.stringify({ orderId, type, name, url }) });
+    await refresh();
+  };
 
   return (
     <DashboardLayout title={config.title || title}>
@@ -219,8 +322,8 @@ export default function GenericDashPage({ title, role, module }) {
             <p className="text-muted text-sm mt-1">Gestiona y consulta la información de este módulo.</p>
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-            <button className="btn btn-ghost btn-sm">Exportar CSV</button>
-            <button className="btn btn-primary btn-sm">+ Nuevo</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>Exportar</button>
+            {module === 'documents' && <button className="btn btn-primary btn-sm" onClick={createDocument}>+ Cargar documento</button>}
           </div>
         </div>
 
@@ -250,7 +353,13 @@ export default function GenericDashPage({ title, role, module }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, ri) => (
+                {loading && (
+                  <tr><td colSpan={config.cols.length + 1} style={{ padding: 'var(--space-5)' }}>Cargando...</td></tr>
+                )}
+                {!loading && rows.length === 0 && (
+                  <tr><td colSpan={config.cols.length + 1} style={{ padding: 'var(--space-5)' }}>No hay registros.</td></tr>
+                )}
+                {!loading && rows.map((row, ri) => (
                   <tr key={ri} style={{
                     borderBottom: '1px solid var(--color-border)',
                     transition: 'background 0.15s',
@@ -279,7 +388,9 @@ export default function GenericDashPage({ title, role, module }) {
                     <td style={{ padding: 'var(--space-4) var(--space-5)', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
                         <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Ver</button>
-                        <button className="btn btn-secondary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Editar</button>
+                        {getActions(data[ri]).map(action => (
+                          <button key={action} className="btn btn-secondary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => runAction(action, data[ri])}>{action}</button>
+                        ))}
                       </div>
                     </td>
                   </tr>
