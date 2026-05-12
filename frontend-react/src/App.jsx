@@ -141,6 +141,11 @@ function AppRoutes() {
           <GenericDashPage title="Pagos" role="admin" module="payments" />
         </ProtectedRoute>
       } />
+      <Route path="/admin/documents" element={
+        <ProtectedRoute requiredRole="admin">
+          <GenericDashPage title="Documentos" role="admin" module="documents" />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/commissions" element={
         <ProtectedRoute requiredRole="admin">
           <GenericDashPage title="Comisiones" role="admin" module="commissions" />

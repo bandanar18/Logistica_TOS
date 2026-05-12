@@ -44,6 +44,23 @@ let ReviewsService = class ReviewsService {
             order: { createdAt: 'DESC' }
         });
     }
+    async findAllForUser(user) {
+        if (user.role === 'admin') {
+            return this.reviewRepo.find({ relations: ['user', 'store', 'order'], order: { createdAt: 'DESC' } });
+        }
+        if (user.role === 'store') {
+            return this.reviewRepo.find({
+                where: { store: { owner: { id: this.userId(user) } } },
+                relations: ['user', 'store', 'order'],
+                order: { createdAt: 'DESC' },
+            });
+        }
+        return this.reviewRepo.find({
+            where: { user: { id: this.userId(user) } },
+            relations: ['user', 'store', 'order'],
+            order: { createdAt: 'DESC' },
+        });
+    }
     async create(data, user) {
         if (!data.orderId)
             throw new common_1.BadRequestException('Order is required to create a review');

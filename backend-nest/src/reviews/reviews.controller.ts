@@ -8,11 +8,11 @@ export class ReviewsController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Query('storeId') storeId?: string) {
+  findAll(@Request() req, @Query('storeId') storeId?: string) {
     if (storeId) {
       return this.reviewsService.findByStore(+storeId);
     }
-    return this.reviewsService.findAll();
+    return this.reviewsService.findAllForUser(req.user);
   }
 
   @Post()

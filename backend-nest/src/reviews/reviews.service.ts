@@ -35,6 +35,24 @@ export class ReviewsService {
     });
   }
 
+  async findAllForUser(user: any): Promise<Review[]> {
+    if (user.role === 'admin') {
+      return this.reviewRepo.find({ relations: ['user', 'store', 'order'], order: { createdAt: 'DESC' } });
+    }
+    if (user.role === 'store') {
+      return this.reviewRepo.find({
+        where: { store: { owner: { id: this.userId(user) } } },
+        relations: ['user', 'store', 'order'],
+        order: { createdAt: 'DESC' },
+      });
+    }
+    return this.reviewRepo.find({
+      where: { user: { id: this.userId(user) } },
+      relations: ['user', 'store', 'order'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async create(data: any, user: any): Promise<Review> {
     if (!data.orderId) throw new BadRequestException('Order is required to create a review');
     if (!data.rating || data.rating < 1 || data.rating > 5) throw new BadRequestException('Rating must be between 1 and 5');

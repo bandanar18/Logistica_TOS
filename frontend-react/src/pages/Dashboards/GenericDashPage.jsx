@@ -383,6 +383,10 @@ export default function GenericDashPage({ title, role, module }) {
       if (module === 'quotations' && label === 'Rechazar') {
         await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) });
       }
+      if (module === 'orders' && label === 'Reseñar') {
+        setModal({ action: label, item });
+        return;
+      }
       if (module === 'orders') {
         const status = label === 'Iniciar' ? 'in_progress' : label === 'Completar' ? 'completed' : 'cancelled';
         await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
@@ -400,9 +404,9 @@ export default function GenericDashPage({ title, role, module }) {
       if (module === 'users') {
         await request(`users/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive: !item.isActive }) });
       }
-      if (module === 'orders' && label === 'Reseñar') {
-        setModal({ action: label, item });
-        return;
+      if (module === 'commissions') {
+        const status = label === 'Liquidar' ? 'settled' : 'withheld';
+        await request(`commissions/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
       }
       await refresh();
     } catch (err) {
@@ -420,6 +424,7 @@ export default function GenericDashPage({ title, role, module }) {
     if (module === 'payments' && role === 'admin' && item.status === 'pending') return ['Confirmar', 'Rechazar'];
     if (module === 'documents' && role === 'admin' && item.status === 'pending') return ['Validar'];
     if (module === 'users' && role === 'admin') return [item.isActive ? 'Desactivar' : 'Activar'];
+    if (module === 'commissions' && role === 'admin' && ['pending', 'earned'].includes(item.status)) return ['Liquidar', 'Retener'];
     return [];
   };
 

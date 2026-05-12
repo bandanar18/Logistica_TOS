@@ -12,5 +12,6 @@ export declare class ReviewsService {
     private userId;
     findAll(): Promise<Review[]>;
     findByStore(storeId: number): Promise<Review[]>;
+    findAllForUser(user: any): Promise<Review[]>;
     create(data: any, user: any): Promise<Review>;
 }

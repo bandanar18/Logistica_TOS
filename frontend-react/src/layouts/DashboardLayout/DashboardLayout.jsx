@@ -43,6 +43,7 @@ const ADMIN_MENU = [
   { label: 'Cotizaciones', icon: FileText, path: '/admin/quotations' },
   { label: 'Órdenes', icon: ClipboardList, path: '/admin/orders' },
   { label: 'Pagos', icon: CreditCard, path: '/admin/payments' },
+  { label: 'Documentos', icon: Folder, path: '/admin/documents' },
   { label: 'TOS (Patios)', icon: Anchor, path: '/admin/tos' },
   { label: 'Almacenamiento', icon: Warehouse, path: '/admin/storage' },
   { label: 'Transporte', icon: Truck, path: '/admin/transport' },

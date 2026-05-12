@@ -21,11 +21,11 @@ let ReviewsController = class ReviewsController {
     constructor(reviewsService) {
         this.reviewsService = reviewsService;
     }
-    findAll(storeId) {
+    findAll(req, storeId) {
         if (storeId) {
             return this.reviewsService.findByStore(+storeId);
         }
-        return this.reviewsService.findAll();
+        return this.reviewsService.findAllForUser(req.user);
     }
     create(data, req) {
         return this.reviewsService.create(data, req.user);
@@ -35,9 +35,10 @@ exports.ReviewsController = ReviewsController;
 __decorate([
     (0, common_1.Get)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Query)('storeId')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('storeId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "findAll", null);
 __decorate([
