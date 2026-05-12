@@ -27,6 +27,9 @@ const storage_module_1 = require("./storage/storage.module");
 const transport_module_1 = require("./transport/transport.module");
 const inspections_module_1 = require("./inspections/inspections.module");
 const reviews_module_1 = require("./reviews/reviews.module");
+const documents_module_1 = require("./documents/documents.module");
+const reports_module_1 = require("./reports/reports.module");
+const commissions_module_1 = require("./commissions/commissions.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -59,6 +62,9 @@ exports.AppModule = AppModule = __decorate([
             transport_module_1.TransportModule,
             inspections_module_1.InspectionsModule,
             reviews_module_1.ReviewsModule,
+            documents_module_1.DocumentsModule,
+            reports_module_1.ReportsModule,
+            commissions_module_1.CommissionsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

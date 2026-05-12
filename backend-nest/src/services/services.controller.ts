@@ -23,6 +23,12 @@ export class ServicesController {
     return this.servicesService.searchPublicServices(query);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll() {
+    return this.servicesService.findAll();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.servicesService.findOne(+id);

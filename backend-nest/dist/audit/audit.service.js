@@ -33,6 +33,13 @@ let AuditService = class AuditService {
             take: 100,
         });
     }
+    async findByEntity(type, id) {
+        return this.auditRepository.find({
+            where: { entityType: type, entityId: id },
+            relations: ['user'],
+            order: { createdAt: 'DESC' },
+        });
+    }
 };
 exports.AuditService = AuditService;
 exports.AuditService = AuditService = __decorate([

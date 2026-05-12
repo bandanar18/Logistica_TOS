@@ -10,3 +10,10 @@ export class AuditController {
   @Get()
   findAll() {
     return this.auditService.findAll();
+  }
+
+  @Get(':type/:id')
+  findByEntity(@Param('type') type: string, @Param('id') id: string) {
+    return this.auditService.findByEntity(type, id);
+  }
+}

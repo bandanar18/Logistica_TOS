@@ -13,4 +13,5 @@ export declare class AuditService {
         details?: any;
     }): Promise<AuditLog>;
     findAll(): Promise<AuditLog[]>;
+    findByEntity(type: string, id: string): Promise<AuditLog[]>;
 }

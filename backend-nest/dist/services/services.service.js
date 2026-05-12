@@ -34,6 +34,9 @@ let ServicesService = class ServicesService {
         const store = await this.storesService.findByOwner(ownerId);
         return this.servicesRepository.find({ where: { store: { id: store.id } }, relations: ['category'] });
     }
+    async findAll() {
+        return this.servicesRepository.find({ relations: ['category', 'store'], order: { createdAt: 'DESC' } });
+    }
     async searchPublicServices(query) {
         const qb = this.servicesRepository.createQueryBuilder('service')
             .leftJoinAndSelect('service.store', 'store')

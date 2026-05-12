@@ -13,6 +13,12 @@ export class StoresController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll() {
+    return this.storesService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   findMyStore(@Request() req) {
     return this.storesService.findByOwner(req.user.sub);

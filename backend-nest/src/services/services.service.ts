@@ -23,6 +23,10 @@ export class ServicesService {
     return this.servicesRepository.find({ where: { store: { id: store.id } }, relations: ['category'] });
   }
 
+  async findAll(): Promise<Service[]> {
+    return this.servicesRepository.find({ relations: ['category', 'store'], order: { createdAt: 'DESC' } });
+  }
+
   async searchPublicServices(query: any): Promise<Service[]> {
     const qb = this.servicesRepository.createQueryBuilder('service')
       .leftJoinAndSelect('service.store', 'store')

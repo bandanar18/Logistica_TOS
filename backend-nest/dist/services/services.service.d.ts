@@ -7,6 +7,7 @@ export declare class ServicesService {
     constructor(servicesRepository: Repository<Service>, storesService: StoresService);
     create(ownerId: number, serviceData: Partial<Service>): Promise<Service>;
     findByStoreOwner(ownerId: number): Promise<Service[]>;
+    findAll(): Promise<Service[]>;
     searchPublicServices(query: any): Promise<Service[]>;
     findOne(id: number): Promise<Service>;
     update(id: number, ownerId: number, data: Partial<Service>): Promise<Service>;

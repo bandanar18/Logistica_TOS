@@ -31,4 +31,11 @@ export class AuditService {
     });
   }
 
- 
+  async findByEntity(type: string, id: string): Promise<AuditLog[]> {
+    return this.auditRepository.find({
+      where: { entityType: type, entityId: id },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+}

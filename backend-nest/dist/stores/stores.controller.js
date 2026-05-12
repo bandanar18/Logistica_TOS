@@ -24,6 +24,9 @@ let StoresController = class StoresController {
     createOrUpdate(req, storeData) {
         return this.storesService.createOrUpdate(req.user.sub, storeData);
     }
+    findAll() {
+        return this.storesService.findAll();
+    }
     findMyStore(req) {
         return this.storesService.findByOwner(req.user.sub);
     }
@@ -41,6 +44,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], StoresController.prototype, "createOrUpdate", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], StoresController.prototype, "findAll", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('me'),

@@ -44,4 +44,17 @@ import { CommissionsModule } from './commissions/commissions.module';
     QuotationsModule,
     OrdersModule,
     PaymentsModule,
-    AuditModule
+    AuditModule,
+    TosModule,
+    StorageModule,
+    TransportModule,
+    InspectionsModule,
+    ReviewsModule,
+    DocumentsModule,
+    ReportsModule,
+    CommissionsModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
