@@ -1,0 +1,28 @@
+.order-info-box {
+  background: rgba(46, 125, 50, 0.05);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-success);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #235d25;
+}
+
+.file-upload-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-upload-zone:hover {
+  border-color: var(--color-success);
+  background: rgba(46, 125, 50, 0.02);
+}
