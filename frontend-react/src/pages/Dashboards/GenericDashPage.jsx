@@ -219,10 +219,124 @@ const MODULE_CONFIG = {
   },
 };
 
+function ActionModal({ action, item, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    price: '',
+    responseNotes: '',
+    orderId: item?.id || '',
+    type: 'factura',
+    name: '',
+    url: '',
+    rating: 5,
+    comment: '',
+    reason: '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  if (!action) return null;
+
+  const update = (key, value) => setForm(current => ({ ...current, [key]: value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSubmit(form);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const title = {
+    Responder: 'Responder cotización',
+    'Cargar documento': 'Cargar documento',
+    'Reseñar': 'Crear reseña',
+    RechazarPago: 'Rechazar pago',
+  }[action] || action;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: 520 }}>
+        <div className="modal-header">
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 700 }}>{title}</h3>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <form onSubmit={submit}>
+          <div className="modal-body" style={{ display: 'grid', gap: 'var(--space-4)' }}>
+            {action === 'Responder' && (
+              <>
+                <label className="form-group">
+                  <span className="form-label">Monto USD</span>
+                  <input className="form-input" type="number" min="0.01" step="0.01" value={form.price} onChange={e => update('price', e.target.value)} required />
+                </label>
+                <label className="form-group">
+                  <span className="form-label">Notas para el cliente</span>
+                  <textarea className="form-textarea" rows="3" value={form.responseNotes} onChange={e => update('responseNotes', e.target.value)} />
+                </label>
+              </>
+            )}
+            {action === 'Cargar documento' && (
+              <>
+                <label className="form-group">
+                  <span className="form-label">ID de orden</span>
+                  <input className="form-input" type="number" value={form.orderId} onChange={e => update('orderId', e.target.value)} required />
+                </label>
+                <label className="form-group">
+                  <span className="form-label">Tipo</span>
+                  <select className="form-select" value={form.type} onChange={e => update('type', e.target.value)}>
+                    <option value="factura">Factura</option>
+                    <option value="bl">BL</option>
+                    <option value="permiso">Permiso</option>
+                    <option value="comprobante">Comprobante</option>
+                  </select>
+                </label>
+                <label className="form-group">
+                  <span className="form-label">Nombre</span>
+                  <input className="form-input" value={form.name} onChange={e => update('name', e.target.value)} required />
+                </label>
+                <label className="form-group">
+                  <span className="form-label">URL del archivo</span>
+                  <input className="form-input" type="url" value={form.url} onChange={e => update('url', e.target.value)} required />
+                </label>
+              </>
+            )}
+            {action === 'Reseñar' && (
+              <>
+                <label className="form-group">
+                  <span className="form-label">Calificación</span>
+                  <select className="form-select" value={form.rating} onChange={e => update('rating', Number(e.target.value))}>
+                    {[5, 4, 3, 2, 1].map(rating => <option key={rating} value={rating}>{rating} estrellas</option>)}
+                  </select>
+                </label>
+                <label className="form-group">
+                  <span className="form-label">Comentario</span>
+                  <textarea className="form-textarea" rows="3" value={form.comment} onChange={e => update('comment', e.target.value)} required />
+                </label>
+              </>
+            )}
+            {action === 'RechazarPago' && (
+              <label className="form-group">
+                <span className="form-label">Motivo</span>
+                <textarea className="form-textarea" rows="3" value={form.reason} onChange={e => update('reason', e.target.value)} required />
+              </label>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function GenericDashPage({ title, role, module }) {
   const { token } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
   const config = MODULE_CONFIG[module] || { title, cols: ['En construcción'], mapRow: () => ['—'] };
 
   const request = async (path, options = {}) => {
@@ -259,10 +373,8 @@ export default function GenericDashPage({ title, role, module }) {
   const runAction = async (label, item) => {
     try {
       if (module === 'quotations' && label === 'Responder') {
-        const price = prompt('Monto de la cotización en USD');
-        if (!price) return;
-        const responseNotes = prompt('Notas para el cliente') || '';
-        await request(`quotations/${item.id}/respond`, { method: 'PATCH', body: JSON.stringify({ price, responseNotes }) });
+        setModal({ action: label, item });
+        return;
       }
       if (module === 'quotations' && label === 'Aprobar') {
         await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
@@ -278,11 +390,19 @@ export default function GenericDashPage({ title, role, module }) {
       if (module === 'payments' && label === 'Confirmar') {
         await request(`payments/${item.id}/confirm`, { method: 'PATCH' });
       }
+      if (module === 'payments' && label === 'Rechazar') {
+        setModal({ action: 'RechazarPago', item });
+        return;
+      }
       if (module === 'documents' && label === 'Validar') {
         await request(`documents/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
       }
       if (module === 'users') {
         await request(`users/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive: !item.isActive }) });
+      }
+      if (module === 'orders' && label === 'Reseñar') {
+        setModal({ action: label, item });
+        return;
       }
       await refresh();
     } catch (err) {
@@ -296,20 +416,32 @@ export default function GenericDashPage({ title, role, module }) {
     if (module === 'quotations' && role === 'client' && item.status === 'responded') return ['Aprobar', 'Rechazar'];
     if (module === 'orders' && role === 'store' && item.status === 'pending') return ['Iniciar', 'Cancelar'];
     if (module === 'orders' && role === 'store' && item.status === 'in_progress') return ['Completar'];
-    if (module === 'payments' && role === 'admin' && item.status === 'pending') return ['Confirmar'];
+    if (module === 'orders' && role === 'client' && item.status === 'completed') return ['Reseñar'];
+    if (module === 'payments' && role === 'admin' && item.status === 'pending') return ['Confirmar', 'Rechazar'];
     if (module === 'documents' && role === 'admin' && item.status === 'pending') return ['Validar'];
     if (module === 'users' && role === 'admin') return [item.isActive ? 'Desactivar' : 'Activar'];
     return [];
   };
 
-  const createDocument = async () => {
-    const orderId = prompt('ID de la orden');
-    const type = prompt('Tipo de documento (BL, factura, permiso, comprobante)');
-    const name = prompt('Nombre del documento');
-    const url = prompt('URL del archivo');
-    if (!orderId || !type || !name || !url) return;
-    await request('documents', { method: 'POST', body: JSON.stringify({ orderId, type, name, url }) });
-    await refresh();
+  const submitModal = async (form) => {
+    try {
+      if (modal.action === 'Responder') {
+        await request(`quotations/${modal.item.id}/respond`, { method: 'PATCH', body: JSON.stringify({ price: form.price, responseNotes: form.responseNotes }) });
+      }
+      if (modal.action === 'Cargar documento') {
+        await request('documents', { method: 'POST', body: JSON.stringify({ orderId: form.orderId, type: form.type, name: form.name, url: form.url }) });
+      }
+      if (modal.action === 'Reseñar') {
+        await request('reviews', { method: 'POST', body: JSON.stringify({ orderId: modal.item.id, rating: form.rating, comment: form.comment }) });
+      }
+      if (modal.action === 'RechazarPago') {
+        await request(`payments/${modal.item.id}/reject`, { method: 'PATCH', body: JSON.stringify({ reason: form.reason }) });
+      }
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo guardar. Revisa los datos y permisos.');
+    }
   };
 
   return (
@@ -323,7 +455,7 @@ export default function GenericDashPage({ title, role, module }) {
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>Exportar</button>
-            {module === 'documents' && <button className="btn btn-primary btn-sm" onClick={createDocument}>+ Cargar documento</button>}
+            {module === 'documents' && <button className="btn btn-primary btn-sm" onClick={() => setModal({ action: 'Cargar documento', item: null })}>+ Cargar documento</button>}
           </div>
         </div>
 
@@ -415,6 +547,7 @@ export default function GenericDashPage({ title, role, module }) {
             </div>
           </div>
         </div>
+        <ActionModal action={modal?.action} item={modal?.item} onClose={() => setModal(null)} onSubmit={submitModal} />
       </div>
     </DashboardLayout>
   );

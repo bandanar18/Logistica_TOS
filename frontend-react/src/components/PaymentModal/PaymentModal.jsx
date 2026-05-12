@@ -8,7 +8,8 @@ export default function PaymentModal({ order, isOpen, onClose }) {
   const [form, setForm] = useState({
     amount: order?.finalPrice || '',
     paymentMethod: 'bank_transfer',
-    reference: ''
+    reference: '',
+    receiptUrl: ''
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -100,10 +101,18 @@ export default function PaymentModal({ order, isOpen, onClose }) {
               </div>
 
               <div className="form-group mt-3">
-                <label className="form-label">Comprobante (Imagen/PDF)</label>
-                <div className="file-upload-zone" style={{ padding: '20px' }}>
-                  <Upload size={20} className="text-muted" />
-                  <p className="text-xs text-muted">Haz clic para subir comprobante</p>
+                <label className="form-label">URL del comprobante</label>
+                <div className="input-with-icon">
+                  <Upload size={16} className="input-icon" />
+                  <input
+                    type="url"
+                    className="form-input"
+                    style={{ paddingLeft: '36px' }}
+                    placeholder="https://..."
+                    value={form.receiptUrl}
+                    onChange={e => setForm({...form, receiptUrl: e.target.value})}
+                    required
+                  />
                 </div>
               </div>
 

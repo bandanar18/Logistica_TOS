@@ -5,4 +5,5 @@ export declare class PaymentsController {
     create(createDto: any, req: any): Promise<import("./entities/payment.entity").Payment>;
     findAll(req: any): Promise<import("./entities/payment.entity").Payment[]>;
     confirm(id: string, req: any): Promise<import("./entities/payment.entity").Payment>;
+    reject(id: string, reason: string, req: any): Promise<import("./entities/payment.entity").Payment>;
 }

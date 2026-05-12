@@ -5,12 +5,15 @@ import { Order } from './entities/order.entity';
 import { User } from '../users/entities/user.entity';
 import { Quotation } from '../quotations/entities/quotation.entity';
 import { AuditService } from '../audit/audit.service';
+import { Payment } from '../payments/entities/payment.entity';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private ordersRepository: Repository<Order>,
+    @InjectRepository(Payment)
+    private paymentsRepository: Repository<Payment>,
     private auditService: AuditService,
   ) {}
 
@@ -74,6 +77,13 @@ export class OrdersService {
     const o = await this.findOne(id);
     if (user.role !== 'admin' && o.store?.owner?.id !== this.userId(user)) {
       throw new ForbiddenException('Only the store owner can update this order');
+    }
+    if (status === 'in_progress') {
+      const confirmedPayments = await this.paymentsRepository.find({ where: { order: { id }, status: 'confirmed' } });
+      const paid = confirmedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+      if (paid < Number(o.finalPrice)) {
+        throw new ForbiddenException('Order cannot start until payment is fully confirmed');
+      }
     }
     o.status = status;
     if (status === 'completed') {

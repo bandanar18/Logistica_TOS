@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from '../orders/entities/order.entity';
@@ -26,5 +26,13 @@ export class CommissionsService {
       }
     }
     return this.commissionsRepository.find({ relations: ['order', 'store'], order: { createdAt: 'DESC' } });
+  }
+
+  async updateStatus(id: number, status: string): Promise<Commission> {
+    if (!['pending', 'earned', 'settled', 'withheld'].includes(status)) throw new BadRequestException('Invalid commission status');
+    const commission = await this.commissionsRepository.findOne({ where: { id }, relations: ['order', 'store'] });
+    if (!commission) throw new NotFoundException('Commission not found');
+    commission.status = status;
+    return this.commissionsRepository.save(commission);
   }
 }

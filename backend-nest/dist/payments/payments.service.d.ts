@@ -11,4 +11,5 @@ export declare class PaymentsService {
     create(createDto: any, client: any): Promise<Payment>;
     findAllForUser(user: any): Promise<Payment[]>;
     confirm(id: number, user: any): Promise<Payment>;
+    reject(id: number, reason: string, user: any): Promise<Payment>;
 }

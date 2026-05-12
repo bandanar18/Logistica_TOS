@@ -42,14 +42,18 @@ export class ServicesService {
     }
 
     if (query.port) {
-      qb.andWhere("store.basePort = :port", { port: query.port });
+      qb.andWhere("store.basePort = :port OR store.basePort LIKE :portName", { port: query.port, portName: `%${query.port}%` });
+    }
+
+    if (query.minRating) {
+      qb.andWhere('store.averageRating >= :minRating', { minRating: Number(query.minRating) });
     }
 
     if (query.storeId) {
       qb.andWhere("store.id = :storeId", { storeId: query.storeId });
     }
 
-    return qb.getMany();
+    return qb.orderBy('store.averageRating', 'DESC').addOrderBy('service.createdAt', 'DESC').getMany();
   }
 
   async findOne(id: number): Promise<Service> {

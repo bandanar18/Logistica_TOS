@@ -41,6 +41,15 @@ let CommissionsService = class CommissionsService {
         }
         return this.commissionsRepository.find({ relations: ['order', 'store'], order: { createdAt: 'DESC' } });
     }
+    async updateStatus(id, status) {
+        if (!['pending', 'earned', 'settled', 'withheld'].includes(status))
+            throw new common_1.BadRequestException('Invalid commission status');
+        const commission = await this.commissionsRepository.findOne({ where: { id }, relations: ['order', 'store'] });
+        if (!commission)
+            throw new common_1.NotFoundException('Commission not found');
+        commission.status = status;
+        return this.commissionsRepository.save(commission);
+    }
 };
 exports.CommissionsService = CommissionsService;
 exports.CommissionsService = CommissionsService = __decorate([

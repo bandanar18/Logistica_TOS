@@ -21,4 +21,9 @@ export class PaymentsController {
   confirm(@Param('id') id: string, @Request() req) {
     return this.paymentsService.confirm(+id, req.user);
   }
+
+  @Patch(':id/reject')
+  reject(@Param('id') id: string, @Body('reason') reason: string, @Request() req) {
+    return this.paymentsService.reject(+id, reason, req.user);
+  }
 }

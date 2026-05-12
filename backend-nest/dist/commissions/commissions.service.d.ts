@@ -6,4 +6,5 @@ export declare class CommissionsService {
     private ordersRepository;
     constructor(commissionsRepository: Repository<Commission>, ordersRepository: Repository<Order>);
     findAll(): Promise<Commission[]>;
+    updateStatus(id: number, status: string): Promise<Commission>;
 }

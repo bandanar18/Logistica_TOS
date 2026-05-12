@@ -30,6 +30,9 @@ let PaymentsController = class PaymentsController {
     confirm(id, req) {
         return this.paymentsService.confirm(+id, req.user);
     }
+    reject(id, reason, req) {
+        return this.paymentsService.reject(+id, reason, req.user);
+    }
 };
 exports.PaymentsController = PaymentsController;
 __decorate([
@@ -55,6 +58,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "confirm", null);
+__decorate([
+    (0, common_1.Patch)(':id/reject'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('reason')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "reject", null);
 exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

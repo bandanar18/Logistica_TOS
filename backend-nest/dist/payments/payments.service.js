@@ -40,7 +40,12 @@ let PaymentsService = class PaymentsService {
             throw new common_1.NotFoundException('Order not found');
         if (order.client.id !== this.userId(client))
             throw new common_1.ForbiddenException('Only the order client can register payments');
-        if (Number(createDto.amount) <= 0 || Number(createDto.amount) > Number(order.finalPrice)) {
+        const existingPayments = await this.paymentsRepository.find({ where: { order: { id: order.id } } });
+        const paidOrPending = existingPayments
+            .filter((payment) => payment.status !== 'rejected')
+            .reduce((sum, payment) => sum + Number(payment.amount), 0);
+        const remaining = Number(order.finalPrice) - paidOrPending;
+        if (Number(createDto.amount) <= 0 || Number(createDto.amount) > remaining) {
             throw new common_1.BadRequestException('Payment amount is invalid for this order');
         }
         const payment = this.paymentsRepository.create({
@@ -83,6 +88,8 @@ let PaymentsService = class PaymentsService {
             throw new common_1.NotFoundException('Payment not found');
         if (user.role !== 'admin')
             throw new common_1.ForbiddenException('Only admins can confirm payments');
+        if (p.status !== 'pending')
+            throw new common_1.BadRequestException('Only pending payments can be confirmed');
         p.status = 'confirmed';
         p.confirmedAt = new Date();
         const saved = await this.paymentsRepository.save(p);
@@ -93,6 +100,26 @@ let PaymentsService = class PaymentsService {
             entityType: 'payment',
             entityId: id.toString(),
             details: { previousStatus: 'pending' }
+        });
+        return saved;
+    }
+    async reject(id, reason, user) {
+        const p = await this.paymentsRepository.findOne({ where: { id }, relations: ['client', 'order'] });
+        if (!p)
+            throw new common_1.NotFoundException('Payment not found');
+        if (user.role !== 'admin')
+            throw new common_1.ForbiddenException('Only admins can reject payments');
+        if (p.status !== 'pending')
+            throw new common_1.BadRequestException('Only pending payments can be rejected');
+        p.status = 'rejected';
+        const saved = await this.paymentsRepository.save(p);
+        await this.auditService.log({
+            user: { id: this.userId(user) },
+            module: 'payments',
+            action: 'payment.rejected',
+            entityType: 'payment',
+            entityId: id.toString(),
+            details: { reason }
         });
         return saved;
     }

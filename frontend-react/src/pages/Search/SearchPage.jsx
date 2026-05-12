@@ -12,6 +12,7 @@ export default function SearchPage() {
   const [category, setCategory] = useState(searchParams.get('cat') || '');
   const [port, setPort] = useState(searchParams.get('port') || '');
   const [sortBy, setSortBy] = useState('rating');
+  const [minRating, setMinRating] = useState(searchParams.get('minRating') || '');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [services, setServices] = useState([]);
@@ -43,6 +44,7 @@ export default function SearchPage() {
       if (query) params.append('q', query);
       if (category) params.append('category', category);
       if (port) params.append('port', port);
+      if (minRating) params.append('minRating', minRating);
       
       const res = await fetch(`http://localhost:3000/services/search?${params.toString()}`);
       if (res.ok) {
@@ -61,7 +63,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchResults();
-  }, [query, category, port]);
+  }, [query, category, port, minRating]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -69,6 +71,7 @@ export default function SearchPage() {
     if (query) params.q = query;
     if (category) params.cat = category;
     if (port) params.port = port;
+    if (minRating) params.minRating = minRating;
     setSearchParams(params);
   };
 
@@ -76,9 +79,15 @@ export default function SearchPage() {
     if (type === 'query') setQuery('');
     if (type === 'category') setCategory('');
     if (type === 'port') setPort('');
+    if (type === 'minRating') setMinRating('');
   };
 
-  const hasFilters = query || category || port;
+  const hasFilters = query || category || port || minRating;
+  const sortedServices = [...services].sort((a, b) => {
+    if (sortBy === 'rating') return Number(b.store?.averageRating || 0) - Number(a.store?.averageRating || 0);
+    if (sortBy === 'orders') return Number(b.store?.reviewCount || 0) - Number(a.store?.reviewCount || 0);
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
 
   return (
     <AppLayout>
@@ -128,6 +137,7 @@ export default function SearchPage() {
               {query && <span className="filter-chip">"{query}" <button onClick={() => clearFilter('query')}><X size={12} /></button></span>}
               {category && <span className="filter-chip">{category} <button onClick={() => clearFilter('category')}><X size={12} /></button></span>}
               {port && <span className="filter-chip"><MapPin size={11} />{port} <button onClick={() => clearFilter('port')}><X size={12} /></button></span>}
+              {minRating && <span className="filter-chip"><Star size={11} />{minRating}+ <button onClick={() => clearFilter('minRating')}><X size={12} /></button></span>}
             </div>
           )}
         </div>
@@ -171,7 +181,7 @@ export default function SearchPage() {
               <h4 className="filter-title">Calificación mínima</h4>
               {[4.5, 4.0, 3.5].map(r => (
                 <label key={r} className="filter-option">
-                  <input type="radio" name="rating" />
+                  <input type="radio" name="rating" checked={minRating === String(r)} onChange={() => setMinRating(minRating === String(r) ? '' : String(r))} />
                   <span>⭐ {r}+ estrellas</span>
                 </label>
               ))}
@@ -179,7 +189,7 @@ export default function SearchPage() {
 
             {hasFilters && (
               <button className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px' }}
-                onClick={() => { setQuery(''); setCategory(''); setPort(''); }}>
+                onClick={() => { setQuery(''); setCategory(''); setPort(''); setMinRating(''); }}>
                 <X size={14} /> Limpiar filtros
               </button>
             )}
@@ -190,7 +200,7 @@ export default function SearchPage() {
             {/* Results Header */}
             <div className="results-header">
               <p className="results-count">
-                <strong>{services.length}</strong> servicio{services.length !== 1 ? 's' : ''} encontrado{services.length !== 1 ? 's' : ''}
+                <strong>{sortedServices.length}</strong> servicio{sortedServices.length !== 1 ? 's' : ''} encontrado{sortedServices.length !== 1 ? 's' : ''}
                 {category && ` en "${categories.find(c=>c.code===category)?.name}"`}
                 {port && ` · ${ports.find(p=>p.code===port)?.name}`}
               </p>
@@ -206,18 +216,18 @@ export default function SearchPage() {
 
             {loading ? (
                <div className="search-empty"><h3>Cargando...</h3></div>
-            ) : services.length === 0 ? (
+            ) : sortedServices.length === 0 ? (
               <div className="search-empty">
                 <div className="search-empty-icon">🔍</div>
                 <h3>Sin resultados</h3>
                 <p>No encontramos servicios que coincidan con tu búsqueda. Intenta con otros filtros.</p>
-                <button className="btn btn-primary" onClick={() => { setQuery(''); setCategory(''); setPort(''); }}>
+                <button className="btn btn-primary" onClick={() => { setQuery(''); setCategory(''); setPort(''); setMinRating(''); }}>
                   Ver todos los servicios
                 </button>
               </div>
             ) : (
               <div className="results-grid">
-                {services.map(service => (
+                {sortedServices.map(service => (
                   <ServiceResultCard key={service.id} service={service} />
                 ))}
               </div>

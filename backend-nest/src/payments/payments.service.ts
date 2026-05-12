@@ -26,7 +26,12 @@ export class PaymentsService {
     const order = await this.ordersRepository.findOne({ where: { id: +orderId }, relations: ['client'] });
     if (!order) throw new NotFoundException('Order not found');
     if (order.client.id !== this.userId(client)) throw new ForbiddenException('Only the order client can register payments');
-    if (Number(createDto.amount) <= 0 || Number(createDto.amount) > Number(order.finalPrice)) {
+    const existingPayments = await this.paymentsRepository.find({ where: { order: { id: order.id } } });
+    const paidOrPending = existingPayments
+      .filter((payment) => payment.status !== 'rejected')
+      .reduce((sum, payment) => sum + Number(payment.amount), 0);
+    const remaining = Number(order.finalPrice) - paidOrPending;
+    if (Number(createDto.amount) <= 0 || Number(createDto.amount) > remaining) {
       throw new BadRequestException('Payment amount is invalid for this order');
     }
 
@@ -72,6 +77,7 @@ export class PaymentsService {
     const p = await this.paymentsRepository.findOne({ where: { id }, relations: ['client', 'order'] });
     if (!p) throw new NotFoundException('Payment not found');
     if (user.role !== 'admin') throw new ForbiddenException('Only admins can confirm payments');
+    if (p.status !== 'pending') throw new BadRequestException('Only pending payments can be confirmed');
     
     p.status = 'confirmed';
     p.confirmedAt = new Date();
@@ -86,6 +92,25 @@ export class PaymentsService {
       details: { previousStatus: 'pending' }
     });
     
+    return saved;
+  }
+
+  async reject(id: number, reason: string, user: any): Promise<Payment> {
+    const p = await this.paymentsRepository.findOne({ where: { id }, relations: ['client', 'order'] });
+    if (!p) throw new NotFoundException('Payment not found');
+    if (user.role !== 'admin') throw new ForbiddenException('Only admins can reject payments');
+    if (p.status !== 'pending') throw new BadRequestException('Only pending payments can be rejected');
+
+    p.status = 'rejected';
+    const saved = await this.paymentsRepository.save(p) as any;
+    await this.auditService.log({
+      user: { id: this.userId(user) } as User,
+      module: 'payments',
+      action: 'payment.rejected',
+      entityType: 'payment',
+      entityId: id.toString(),
+      details: { reason }
+    });
     return saved;
   }
 }
