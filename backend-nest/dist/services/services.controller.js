@@ -16,6 +16,7 @@ exports.ServicesController = void 0;
 const common_1 = require("@nestjs/common");
 const services_service_1 = require("./services.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const swagger_1 = require("@nestjs/swagger");
 let ServicesController = class ServicesController {
     servicesService;
     constructor(servicesService) {
@@ -27,9 +28,6 @@ let ServicesController = class ServicesController {
     findStoreServices(req) {
         return this.servicesService.findByStoreOwner(req.user.sub);
     }
-    search(query) {
-        return this.servicesService.searchPublicServices(query);
-    }
     findAll() {
         return this.servicesService.findAll();
     }
@@ -38,6 +36,12 @@ let ServicesController = class ServicesController {
     }
     update(id, req, data) {
         return this.servicesService.update(+id, req.user.sub, data);
+    }
+    publish(id, req) {
+        return this.servicesService.update(+id, req.user.sub, { status: 'published' });
+    }
+    pause(id, req) {
+        return this.servicesService.update(+id, req.user.sub, { status: 'paused' });
     }
     remove(id, req) {
         return this.servicesService.remove(+id, req.user.sub);
@@ -62,21 +66,16 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ServicesController.prototype, "findStoreServices", null);
 __decorate([
-    (0, common_1.Get)('search'),
-    __param(0, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], ServicesController.prototype, "search", null);
-__decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Listar servicios' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], ServicesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Ver servicio' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -85,6 +84,7 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Actualizar servicio' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Request)()),
     __param(2, (0, common_1.Body)()),
@@ -94,7 +94,28 @@ __decorate([
 ], ServicesController.prototype, "update", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)(':id/publish'),
+    (0, swagger_1.ApiOperation)({ summary: 'Publicar servicio' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ServicesController.prototype, "publish", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)(':id/pause'),
+    (0, swagger_1.ApiOperation)({ summary: 'Pausar servicio' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ServicesController.prototype, "pause", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Delete)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Eliminar servicio' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -102,6 +123,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ServicesController.prototype, "remove", null);
 exports.ServicesController = ServicesController = __decorate([
+    (0, swagger_1.ApiTags)('Services'),
     (0, common_1.Controller)('services'),
     __metadata("design:paramtypes", [services_service_1.ServicesService])
 ], ServicesController);

@@ -3,10 +3,12 @@ import { createContext, useContext, useState } from 'react';
 const AuthContext = createContext(null);
 
 export const MOCK_USERS = {
-  client: { id: 1, name: 'Carlos García', email: 'garcia@empresa.com', role: 'client', avatar: 'CG' },
-  store: { id: 2, name: 'Admin LogisTrade', email: 'admin@logistrade.com', role: 'store', avatar: 'AL' },
-  admin: { id: 3, name: 'Super Admin', email: 'superadmin@tos.com', role: 'admin', avatar: 'SA' },
+  client: { id: 1, name: 'Carlos Cliente', email: 'client@tos.com', role: 'client', avatar: 'CC' },
+  store: { id: 2, name: 'Pedro Tienda', email: 'store@tos.com', role: 'store', avatar: 'PT' },
+  admin: { id: 3, name: 'Super Admin', email: 'admin@tos.com', role: 'admin', avatar: 'SA' },
 };
+
+import API_BASE_URL from '../config/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -18,13 +20,15 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const res = await fetch('http://localhost:3000/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      if (!res.ok) throw new Error('Credenciales inválidas');
-      const data = await res.json();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Credenciales inválidas');
+      
+      const data = json.data;
       const normalizedUser = {
         ...data.user,
         name: `${data.user.firstName} ${data.user.lastName}`,
@@ -43,13 +47,15 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     try {
-      const res = await fetch('http://localhost:3000/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
       });
-      if (!res.ok) throw new Error('Error al registrar');
-      const data = await res.json();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Error al registrar');
+      
+      const data = json.data;
       const normalizedUser = {
         ...data.user,
         name: `${data.user.firstName} ${data.user.lastName}`,
@@ -73,18 +79,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
   };
 
-  // Demo login bypass for UI testing
-  const demoLogin = (role) => {
-    const mockUser = {
-      client: { id: 1, name: 'Carlos García', firstName: 'Carlos', lastName: 'García', email: 'garcia@empresa.com', role: 'client', avatar: 'CG' },
-      store: { id: 2, name: 'Admin LogisTrade', firstName: 'Admin', lastName: 'LogisTrade', email: 'admin@logistrade.com', role: 'store', avatar: 'AL' },
-      admin: { id: 3, name: 'Super Admin', firstName: 'Super', lastName: 'Admin', email: 'superadmin@tos.com', role: 'admin', avatar: 'SA' },
+  const demoLogin = async (role) => {
+    const credentials = {
+      client: { email: 'client@tos.com', password: 'password123' },
+      store: { email: 'store@tos.com', password: 'password123' },
+      admin: { email: 'admin@tos.com', password: 'password123' },
     }[role];
-    setUser(mockUser);
+    if (!credentials) throw new Error('Rol demo inválido');
+    return login(credentials.email, credentials.password);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, demoLogin, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, demoLogin, isAuthenticated: !!user && !!token }}>
       {children}
     </AuthContext.Provider>
   );

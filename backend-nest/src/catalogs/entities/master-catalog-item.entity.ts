@@ -18,6 +18,16 @@ export class MasterCatalogItem {
   @Column({ default: 'active' })
   status: string;
 
+  @Column({ type: 'json', nullable: true })
+  metadata: any;
+
+  @Column({ nullable: true })
+  orderIndex: number;
+
+  @ManyToOne(() => MasterCatalogItem, { nullable: true })
+  @JoinColumn({ name: 'parent_item_id' })
+  parentItem: MasterCatalogItem;
+
   @ManyToOne(() => MasterCatalog, catalog => catalog.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'catalog_id' })
   catalog: MasterCatalog;

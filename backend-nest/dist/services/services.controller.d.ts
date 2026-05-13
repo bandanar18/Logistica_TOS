@@ -4,9 +4,10 @@ export declare class ServicesController {
     constructor(servicesService: ServicesService);
     create(req: any, serviceData: any): Promise<import("./entities/service.entity").Service>;
     findStoreServices(req: any): Promise<import("./entities/service.entity").Service[]>;
-    search(query: any): Promise<import("./entities/service.entity").Service[]>;
     findAll(): Promise<import("./entities/service.entity").Service[]>;
     findOne(id: string): Promise<import("./entities/service.entity").Service>;
     update(id: string, req: any, data: any): Promise<import("./entities/service.entity").Service>;
+    publish(id: string, req: any): Promise<import("./entities/service.entity").Service>;
+    pause(id: string, req: any): Promise<import("./entities/service.entity").Service>;
     remove(id: string, req: any): Promise<void>;
 }

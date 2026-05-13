@@ -22,6 +22,21 @@ export class Service {
   @Column()
   billingUnit: string; // e.g., 'Contenedor', 'Viaje', 'Hora'
 
+  @Column({ type: 'text', nullable: true })
+  scope: string;
+
+  @Column({ type: 'text', nullable: true })
+  exclusions: string;
+
+  @Column({ nullable: true })
+  slaHours: number;
+
+  @Column({ type: 'json', nullable: true })
+  requiredDocuments: string[]; // List of document type codes
+
+  @Column({ default: 'USD' })
+  currencyCode: string;
+
   @Column({ default: 'draft' })
   status: string; // draft, published, paused
 

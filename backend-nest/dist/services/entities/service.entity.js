@@ -20,6 +20,11 @@ let Service = class Service {
     description;
     basePrice;
     billingUnit;
+    scope;
+    exclusions;
+    slaHours;
+    requiredDocuments;
+    currencyCode;
     status;
     store;
     category;
@@ -51,6 +56,26 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Service.prototype, "billingUnit", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Service.prototype, "scope", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Service.prototype, "exclusions", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], Service.prototype, "slaHours", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Service.prototype, "requiredDocuments", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'USD' }),
+    __metadata("design:type", String)
+], Service.prototype, "currencyCode", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: 'draft' }),
     __metadata("design:type", String)

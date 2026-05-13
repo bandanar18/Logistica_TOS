@@ -58,6 +58,7 @@ const inspection_entity_1 = require("./inspections/entities/inspection.entity");
 const inspection_result_entity_1 = require("./inspections/entities/inspection-result.entity");
 const bcrypt = __importStar(require("bcrypt"));
 const path = __importStar(require("path"));
+const seed_data_1 = require("./seed-data");
 async function seed() {
     const dataSource = new typeorm_1.DataSource({
         type: 'mysql',
@@ -101,47 +102,31 @@ async function seed() {
     console.log('Users seeded');
     const catalogRepo = dataSource.getRepository(master_catalog_entity_1.MasterCatalog);
     const catalogItemRepo = dataSource.getRepository(master_catalog_item_entity_1.MasterCatalogItem);
-    let serviceCat = await catalogRepo.findOneBy({ code: 'SERVICE_CATEGORIES' });
-    if (!serviceCat) {
-        serviceCat = await catalogRepo.save({ code: 'SERVICE_CATEGORIES', name: 'Categorías de Servicios' });
-    }
-    const categories = [
-        { code: 'ADUANA', name: 'Aduana' },
-        { code: 'TRANSPORTE', name: 'Transporte' },
-        { code: 'ALMACENAMIENTO', name: 'Almacenamiento' },
-        { code: 'INSPECCION', name: 'Inspección' },
-    ];
-    const categoryEntities = {};
-    for (const c of categories) {
-        let item = await catalogItemRepo.findOneBy({ code: c.code, catalog: { id: serviceCat.id } });
-        if (!item) {
-            item = await catalogItemRepo.save({ ...c, catalog: serviceCat });
+    const catalogItemEntities = {};
+    for (const catData of seed_data_1.MASTER_CATALOGS_DATA) {
+        let catalog = await catalogRepo.findOneBy({ code: catData.code });
+        if (!catalog) {
+            catalog = await catalogRepo.save({ code: catData.code, name: catData.name });
         }
-        categoryEntities[c.code] = item;
-    }
-    let portsCat = await catalogRepo.findOneBy({ code: 'PORTS' });
-    if (!portsCat) {
-        portsCat = await catalogRepo.save({ code: 'PORTS', name: 'Puertos' });
-    }
-    const ports = [
-        { code: 'PUERTO_CABELLO', name: 'Puerto Cabello' },
-        { code: 'LA_GUAIRA', name: 'La Guaira' },
-        { code: 'MARACAIBO', name: 'Maracaibo' },
-    ];
-    for (const p of ports) {
-        let item = await catalogItemRepo.findOneBy({ code: p.code, catalog: { id: portsCat.id } });
-        if (!item) {
-            await catalogItemRepo.save({ ...p, catalog: portsCat });
+        for (const itemData of catData.items) {
+            let item = await catalogItemRepo.findOneBy({ code: itemData.code, catalog: { id: catalog.id } });
+            if (!item) {
+                item = await catalogItemRepo.save({
+                    ...itemData,
+                    catalog,
+                });
+            }
+            catalogItemEntities[itemData.code] = item;
         }
     }
-    console.log('Catalogs seeded');
+    console.log('Master catalogs expanded and seeded');
     const storeRepo = dataSource.getRepository(store_entity_1.Store);
     let store = await storeRepo.findOneBy({ owner: { id: userEntities['store@tos.com'].id } });
     if (!store) {
         store = await storeRepo.save({
-            legalName: 'Logística Total C.A.',
+            legalName: 'Logistica Total C.A.',
             taxId: 'J-123456789',
-            basePort: 'Puerto Cabello',
+            basePort: 'PORT-HOUSTON',
             description: 'Expertos en logística portuaria y aduanas.',
             brandColor: '#0055ff',
             status: 'approved',
@@ -152,21 +137,26 @@ async function seed() {
     }
     console.log('Store seeded');
     const serviceRepo = dataSource.getRepository(service_entity_1.Service);
-    const servicesData = [
-        { name: 'Despacho Aduanero Importación', code: 'SERV-ADU-001', basePrice: 450, billingUnit: 'Contenedor', category: categoryEntities['ADUANA'], store, status: 'published' },
-        { name: 'Transporte Puerto a Almacén', code: 'SERV-TRA-001', basePrice: 600, billingUnit: 'Viaje', category: categoryEntities['TRANSPORTE'], store, status: 'published' },
-        { name: 'Almacenamiento Fiscal por 7 días', code: 'SERV-ALM-001', basePrice: 320, billingUnit: 'Semana', category: categoryEntities['ALMACENAMIENTO'], store, status: 'published' },
-        { name: 'Inspección física de contenedor', code: 'SERV-INS-001', basePrice: 180, billingUnit: 'Inspección', category: categoryEntities['INSPECCION'], store, status: 'published' },
-    ];
     const serviceEntities = {};
-    for (const s of servicesData) {
+    for (const s of seed_data_1.MVP_SERVICES_DATA) {
         let service = await serviceRepo.findOneBy({ code: s.code, store: { id: store.id } });
+        const category = catalogItemEntities[s.categoryCode];
+        const serviceData = {
+            ...s,
+            category,
+            store,
+        };
+        delete serviceData.categoryCode;
         if (!service) {
-            service = await serviceRepo.save(s);
+            service = await serviceRepo.save(serviceData);
+        }
+        else {
+            Object.assign(service, serviceData);
+            service = await serviceRepo.save(service);
         }
         serviceEntities[s.code] = service;
     }
-    console.log('Services seeded');
+    console.log('Services expanded and seeded');
     const quotationRepo = dataSource.getRepository(quotation_entity_1.Quotation);
     const orderRepo = dataSource.getRepository(order_entity_1.Order);
     const paymentRepo = dataSource.getRepository(payment_entity_1.Payment);
@@ -196,10 +186,10 @@ async function seed() {
         }
         return quotation;
     };
-    await ensureQuotation('SERV-INS-001', 'pending');
-    await ensureQuotation('SERV-ALM-001', 'responded', 320, 'Incluye 7 días de almacenaje fiscal y control de inventario.');
-    const approvedQuotation = await ensureQuotation('SERV-TRA-001', 'order_created', 600, 'Unidad disponible con chofer certificado.');
-    const completedQuotation = await ensureQuotation('SERV-ADU-001', 'order_created', 450, 'Despacho aduanero integral con revisión documental.');
+    await ensureQuotation('SER-INS-001', 'pending');
+    await ensureQuotation('SER-ALM-001', 'responded', 320, 'Incluye 7 días de almacenaje fiscal y control de inventario.');
+    const approvedQuotation = await ensureQuotation('SER-TRA-001', 'order_created', 350, 'Unidad disponible con chofer certificado.');
+    const completedQuotation = await ensureQuotation('SER-ADU-001', 'order_created', 450, 'Despacho aduanero integral con revisión documental.');
     const ensureOrder = async (quotation, status) => {
         let order = await orderRepo.findOne({ where: { quotation: { id: quotation.id } }, relations: ['client', 'store', 'service', 'quotation'] });
         if (!order) {

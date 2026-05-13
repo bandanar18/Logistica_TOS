@@ -5,6 +5,8 @@ import AppLayout from '../../layouts/AppLayout/AppLayout';
 import ServiceResultCard from '../../components/ServiceResultCard/ServiceResultCard';
 import './SearchPage.css';
 
+import API_BASE_URL from '../../config/api';
+
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -22,15 +24,15 @@ export default function SearchPage() {
 
   const fetchCatalogs = async () => {
     try {
-      const resCat = await fetch('http://localhost:3000/catalogs/SERVICE_CATEGORIES');
+      const resCat = await fetch(`${API_BASE_URL}/search/categories`);
       if (resCat.ok) {
-        const data = await resCat.json();
-        setCategories(data.items || []);
+        const json = await resCat.json();
+        setCategories(json.data?.items || []);
       }
-      const resPorts = await fetch('http://localhost:3000/catalogs/PORTS');
+      const resPorts = await fetch(`${API_BASE_URL}/catalogs/PORTS`);
       if (resPorts.ok) {
-        const data = await resPorts.json();
-        setPorts(data.items || []);
+        const json = await resPorts.json();
+        setPorts(json.data?.items || []);
       }
     } catch (err) {
       console.error(err);
@@ -46,9 +48,10 @@ export default function SearchPage() {
       if (port) params.append('port', port);
       if (minRating) params.append('minRating', minRating);
       
-      const res = await fetch(`http://localhost:3000/services/search?${params.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/search/services?${params.toString()}`);
       if (res.ok) {
-        setServices(await res.json());
+        const json = await res.json();
+        setServices(json.data || []);
       }
     } catch (err) {
       console.error(err);

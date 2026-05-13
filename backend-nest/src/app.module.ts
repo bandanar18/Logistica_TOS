@@ -21,6 +21,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ReportsModule } from './reports/reports.module';
 import { CommissionsModule } from './commissions/commissions.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { CommissionsModule } from './commissions/commissions.module';
     DocumentsModule,
     ReportsModule,
     CommissionsModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

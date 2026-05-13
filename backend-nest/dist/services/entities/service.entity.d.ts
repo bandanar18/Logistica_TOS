@@ -7,6 +7,11 @@ export declare class Service {
     description: string;
     basePrice: number;
     billingUnit: string;
+    scope: string;
+    exclusions: string;
+    slaHours: number;
+    requiredDocuments: string[];
+    currencyCode: string;
     status: string;
     store: Store;
     category: MasterCatalogItem;

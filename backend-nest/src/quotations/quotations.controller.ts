@@ -42,11 +42,13 @@ export class QuotationsController {
     if (q.client.id !== (req.user.sub || req.user.id)) {
       throw new ForbiddenException('Only the client can convert the quotation to an order');
     }
-    if (q.status !== 'approved') {
+    if (!['approved', 'order_created'].includes(q.status)) {
        throw new ForbiddenException('Quotation must be approved to be converted to an order');
     }
     const order = await this.ordersService.createFromQuotation(q);
-    await this.quotationsService.updateStatus(+id, 'order_created', req.user);
+    if (q.status !== 'order_created') {
+      await this.quotationsService.updateStatus(+id, 'order_created', req.user);
+    }
     return order;
   }
 }

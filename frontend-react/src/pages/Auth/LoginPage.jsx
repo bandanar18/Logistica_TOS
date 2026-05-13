@@ -12,11 +12,16 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
 
-  const handleDemoLogin = (role) => {
-    demoLogin(role);
-    if (role === 'admin') navigate('/admin');
-    else if (role === 'store') navigate('/dashboard/store');
-    else navigate('/dashboard/client');
+  const handleDemoLogin = async (role) => {
+    setError('');
+    try {
+      await demoLogin(role);
+      if (role === 'admin') navigate('/admin');
+      else if (role === 'store') navigate('/dashboard/store');
+      else navigate('/dashboard/client');
+    } catch (err) {
+      setError('No se pudo iniciar sesión demo. Verifica que el backend esté corriendo y ejecuta npm run seed.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -109,7 +114,7 @@ export default function LoginPage() {
 
             {/* Demo Access */}
             <div className="auth-demo">
-              <p className="auth-demo-label">Acceso de demostración (Sin Backend):</p>
+              <p className="auth-demo-label">Acceso de demostración:</p>
               <div className="auth-demo-btns">
                 <button type="button" className="demo-btn client" onClick={() => handleDemoLogin('client')}>
                   👤 Cliente

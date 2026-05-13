@@ -18,7 +18,7 @@ export default function RequestQuoteModal({ service, isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !token) {
       alert('Debes iniciar sesión para solicitar una cotización');
       return;
     }
@@ -46,7 +46,10 @@ export default function RequestQuoteModal({ service, isOpen, onClose }) {
           setForm({ notes: '', estimatedDate: '', cargoType: '', quantity: '' });
         }, 3000);
       } else {
-        alert('Error al enviar la solicitud');
+        const message = res.status === 401
+          ? 'Tu sesión expiró o no tiene token válido. Cierra sesión e inicia nuevamente.'
+          : 'Error al enviar la solicitud';
+        alert(message);
       }
     } catch (err) {
       console.error(err);

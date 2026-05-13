@@ -5,6 +5,9 @@ export declare class MasterCatalogItem {
     name: string;
     description: string;
     status: string;
+    metadata: any;
+    orderIndex: number;
+    parentItem: MasterCatalogItem;
     catalog: MasterCatalog;
     createdAt: Date;
     updatedAt: Date;

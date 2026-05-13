@@ -337,6 +337,7 @@ export default function GenericDashPage({ title, role, module }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [processingKey, setProcessingKey] = useState(null);
   const config = MODULE_CONFIG[module] || { title, cols: ['En construcción'], mapRow: () => ['—'] };
 
   const request = async (path, options = {}) => {
@@ -371,6 +372,9 @@ export default function GenericDashPage({ title, role, module }) {
   const rows = data.map(item => config.mapRow(item, role));
 
   const runAction = async (label, item) => {
+    const key = `${module}-${item.id}-${label}`;
+    if (processingKey) return;
+    setProcessingKey(key);
     try {
       if (module === 'quotations' && label === 'Responder') {
         setModal({ action: label, item });
@@ -412,6 +416,8 @@ export default function GenericDashPage({ title, role, module }) {
     } catch (err) {
       console.error(err);
       alert('No se pudo ejecutar la acción. Revisa permisos y estado del registro.');
+    } finally {
+      setProcessingKey(null);
     }
   };
 
@@ -526,7 +532,9 @@ export default function GenericDashPage({ title, role, module }) {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
                         <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Ver</button>
                         {getActions(data[ri]).map(action => (
-                          <button key={action} className="btn btn-secondary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => runAction(action, data[ri])}>{action}</button>
+                          <button key={action} className="btn btn-secondary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} disabled={!!processingKey} onClick={() => runAction(action, data[ri])}>
+                            {processingKey === `${module}-${data[ri].id}-${action}` ? 'Procesando...' : action}
+                          </button>
                         ))}
                       </div>
                     </td>

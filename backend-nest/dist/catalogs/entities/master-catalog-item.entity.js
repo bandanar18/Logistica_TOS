@@ -18,6 +18,9 @@ let MasterCatalogItem = class MasterCatalogItem {
     name;
     description;
     status;
+    metadata;
+    orderIndex;
+    parentItem;
     catalog;
     createdAt;
     updatedAt;
@@ -43,6 +46,19 @@ __decorate([
     (0, typeorm_1.Column)({ default: 'active' }),
     __metadata("design:type", String)
 ], MasterCatalogItem.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], MasterCatalogItem.prototype, "metadata", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], MasterCatalogItem.prototype, "orderIndex", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => MasterCatalogItem, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'parent_item_id' }),
+    __metadata("design:type", MasterCatalogItem)
+], MasterCatalogItem.prototype, "parentItem", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => master_catalog_entity_1.MasterCatalog, catalog => catalog.items, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'catalog_id' }),

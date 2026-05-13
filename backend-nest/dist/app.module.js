@@ -30,6 +30,7 @@ const reviews_module_1 = require("./reviews/reviews.module");
 const documents_module_1 = require("./documents/documents.module");
 const reports_module_1 = require("./reports/reports.module");
 const commissions_module_1 = require("./commissions/commissions.module");
+const search_module_1 = require("./search/search.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -65,6 +66,7 @@ exports.AppModule = AppModule = __decorate([
             documents_module_1.DocumentsModule,
             reports_module_1.ReportsModule,
             commissions_module_1.CommissionsModule,
+            search_module_1.SearchModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -132,6 +132,15 @@ let QuotationsService = class QuotationsService {
         if (q.client.id !== this.userId(user) && user.role !== 'admin') {
             throw new common_1.ForbiddenException('Only the client can approve or reject the quotation');
         }
+        if (status === 'approved' && ['approved', 'order_created'].includes(q.status)) {
+            return q;
+        }
+        if (status === 'rejected' && q.status === 'rejected') {
+            return q;
+        }
+        if (status === 'order_created' && q.status === 'order_created') {
+            return q;
+        }
         if ((status === 'approved' || status === 'rejected') && q.status !== 'responded') {
             throw new common_1.BadRequestException('Only responded quotations can be approved or rejected');
         }
