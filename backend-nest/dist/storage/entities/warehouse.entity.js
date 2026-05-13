@@ -11,10 +11,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Warehouse = void 0;
 const typeorm_1 = require("typeorm");
+const master_catalog_item_entity_1 = require("../../catalogs/entities/master-catalog-item.entity");
 let Warehouse = class Warehouse {
     id;
     name;
     code;
+    type;
     address;
     status;
     createdAt;
@@ -33,6 +35,11 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Warehouse.prototype, "code", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => master_catalog_item_entity_1.MasterCatalogItem),
+    (0, typeorm_1.JoinColumn)({ name: 'type_id' }),
+    __metadata("design:type", master_catalog_item_entity_1.MasterCatalogItem)
+], Warehouse.prototype, "type", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

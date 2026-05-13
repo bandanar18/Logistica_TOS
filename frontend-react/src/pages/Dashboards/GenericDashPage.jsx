@@ -159,11 +159,11 @@ const MODULE_CONFIG = {
     cols: ['Número', 'Tipo', 'Carga', 'Patio', 'Ubicación', 'Estado'],
     mapRow: (c) => [
       c.containerNumber,
-      c.type,
-      c.loadStatus,
+      c.type?.name || c.type || '—',
+      c.loadStatus?.name || c.loadStatus || '—',
       c.yard?.name || '—',
       c.locationInYard || '—',
-      c.status
+      c.status?.name || c.status || '—'
     ],
   },
   storage: {
@@ -174,7 +174,7 @@ const MODULE_CONFIG = {
       i.sku,
       i.description,
       i.quantity,
-      i.unit,
+      i.unit?.name || i.unit || '—',
       i.warehouse?.name || '—',
       i.location ? `${i.location.aisle}-${i.location.shelf}-${i.location.level}` : '—'
     ],
@@ -332,6 +332,8 @@ function ActionModal({ action, item, onClose, onSubmit }) {
   );
 }
 
+import API_BASE_URL from '../../config/api';
+
 export default function GenericDashPage({ title, role, module }) {
   const { token } = useAuth();
   const [data, setData] = useState([]);
@@ -341,7 +343,7 @@ export default function GenericDashPage({ title, role, module }) {
   const config = MODULE_CONFIG[module] || { title, cols: ['En construcción'], mapRow: () => ['—'] };
 
   const request = async (path, options = {}) => {
-    const res = await fetch(`http://localhost:3000/${path}`, {
+    const res = await fetch(`${API_BASE_URL}/${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -350,7 +352,8 @@ export default function GenericDashPage({ title, role, module }) {
       }
     });
     if (!res.ok) throw new Error(await res.text());
-    return res.json().catch(() => null);
+    const json = await res.json().catch(() => null);
+    return json?.data || json;
   };
 
   const refresh = async () => {

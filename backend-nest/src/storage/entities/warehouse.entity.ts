@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { MasterCatalogItem } from '../../catalogs/entities/master-catalog-item.entity';
 
 @Entity('warehouses')
 export class Warehouse {
@@ -10,6 +11,10 @@ export class Warehouse {
 
   @Column()
   code: string;
+
+  @ManyToOne(() => MasterCatalogItem)
+  @JoinColumn({ name: 'type_id' })
+  type: MasterCatalogItem;
 
   @Column({ nullable: true })
   address: string;

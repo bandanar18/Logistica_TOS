@@ -168,6 +168,34 @@ export const MASTER_CATALOGS_DATA = [
       { code: 'CONFIRMED', name: 'Confirmado' },
       { code: 'REJECTED', name: 'Rechazado' },
     ]
+  },
+  {
+    code: 'WAREHOUSE_TYPES',
+    name: 'Tipos de Almacén',
+    items: [
+      { code: 'BONDED', name: 'Almacén Fiscal', description: 'Depósito bajo control aduanero' },
+      { code: 'GENERAL', name: 'Almacén General', description: 'Depósito de mercancía nacionalizada' },
+      { code: 'REFRIGERATED', name: 'Almacén Refrigerado', description: 'Control de temperatura' },
+    ]
+  },
+  {
+    code: 'TOS_CONTAINER_STATUSES',
+    name: 'Estados de Contenedor (TOS)',
+    items: [
+      { code: 'AVAILABLE', name: 'Disponible' },
+      { code: 'BLOCKED', name: 'Bloqueado/Retenido' },
+      { code: 'DEPARTED', name: 'Despachado/Salida' },
+      { code: 'UNDER_INSPECTION', name: 'En Inspección' },
+    ]
+  },
+  {
+    code: 'OPERATIONAL_STATUSES',
+    name: 'Estados Operativos de Carga',
+    items: [
+      { code: 'EMPTY', name: 'Vacío' },
+      { code: 'FULL', name: 'Lleno' },
+      { code: 'PARTIAL', name: 'Parcial' },
+    ]
   }
 ];
 

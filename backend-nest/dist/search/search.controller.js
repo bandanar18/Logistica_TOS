@@ -31,7 +31,7 @@ let SearchController = class SearchController {
         return this.servicesService.searchPublicServices(query);
     }
     async searchCategories() {
-        return this.catalogsService.findByCode('SERVICE_CATEGORIES');
+        return this.catalogsService.findOne('SERVICE_CATEGORIES');
     }
     searchStores(query) {
         return this.storesService.findAll();

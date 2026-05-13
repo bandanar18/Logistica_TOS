@@ -22,7 +22,7 @@ export class SearchController {
   @Get('categories')
   @ApiOperation({ summary: 'Listar categorías para búsqueda' })
   async searchCategories() {
-    return this.catalogsService.findByCode('SERVICE_CATEGORIES');
+    return this.catalogsService.findOne('SERVICE_CATEGORIES');
   }
 
   @Get('stores')

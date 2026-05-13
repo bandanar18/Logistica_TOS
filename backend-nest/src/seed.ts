@@ -280,23 +280,46 @@ async function seed() {
   const inspectionRepo = dataSource.getRepository(Inspection);
   const inspectionResultRepo = dataSource.getRepository(InspectionResult);
 
+  let warehouse = await warehouseRepo.findOneBy({ code: 'WH-PC-01' });
+  if (!warehouse) {
+    warehouse = await warehouseRepo.save({ 
+      name: 'Almacén Fiscal Puerto Cabello', 
+      code: 'WH-PC-01', 
+      address: 'Zona portuaria, Puerto Cabello', 
+      status: 'active',
+      type: catalogItemEntities['BONDED']
+    } as any);
+  }
+
   let yard = await yardRepo.findOneBy({ code: 'YARD-PC-A' });
   if (!yard) yard = await yardRepo.save({ name: 'Patio Puerto Cabello A', code: 'YARD-PC-A', capacity: 500, status: 'active' } as any);
 
   let container = await containerRepo.findOneBy({ containerNumber: 'TOSU1234567' });
   if (!container) {
-    container = await containerRepo.save({ containerNumber: 'TOSU1234567', type: '40HC', loadStatus: 'full', yard, locationInYard: 'A-01-03', status: 'available' } as any);
+    container = await containerRepo.save({ 
+      containerNumber: 'TOSU1234567', 
+      type: catalogItemEntities['40HC'], 
+      loadStatus: catalogItemEntities['FULL'], 
+      yard, 
+      locationInYard: 'A-01-03', 
+      status: catalogItemEntities['AVAILABLE'] 
+    } as any);
   }
-
-  let warehouse = await warehouseRepo.findOneBy({ code: 'WH-PC-01' });
-  if (!warehouse) warehouse = await warehouseRepo.save({ name: 'Almacén Fiscal Puerto Cabello', code: 'WH-PC-01', address: 'Zona portuaria, Puerto Cabello', status: 'active' } as any);
 
   let location = await locationRepo.findOne({ where: { warehouse: { id: warehouse!.id }, aisle: 'A', shelf: '01', level: '02' } });
   if (!location) location = await locationRepo.save({ warehouse, aisle: 'A', shelf: '01', level: '02', status: 'partial' } as any);
 
   let item = await inventoryItemRepo.findOneBy({ sku: 'DEMO-CARGO-001' });
   if (!item) {
-    item = await inventoryItemRepo.save({ sku: 'DEMO-CARGO-001', description: 'Carga demo asociada a orden completada', quantity: 12, unit: 'pallets', warehouse, location, order: completedOrder } as any);
+    item = await inventoryItemRepo.save({ 
+      sku: 'DEMO-CARGO-001', 
+      description: 'Carga demo asociada a orden completada', 
+      quantity: 12, 
+      unit: catalogItemEntities['TON'], 
+      warehouse, 
+      location, 
+      order: completedOrder 
+    } as any);
   }
 
   let vehicle = await vehicleRepo.findOneBy({ plate: 'DEMO-01' });

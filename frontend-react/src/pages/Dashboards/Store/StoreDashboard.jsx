@@ -27,6 +27,8 @@ const STATUS_LABELS = {
   cancelled: 'Cancelada',
 };
 
+import API_BASE_URL from '../../../config/api';
+
 export default function StoreDashboard() {
   const { user, token } = useAuth();
   const [quotations, setQuotations] = useState([]);
@@ -37,11 +39,17 @@ export default function StoreDashboard() {
     const fetchData = async () => {
       try {
         const [resQ, resO] = await Promise.all([
-          fetch('http://localhost:3000/quotations', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:3000/orders', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/quotations`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        if (resQ.ok) setQuotations(await resQ.json());
-        if (resO.ok) setOrders(await resO.json());
+        if (resQ.ok) {
+          const json = await resQ.json();
+          setQuotations(json.data || []);
+        }
+        if (resO.ok) {
+          const json = await resO.json();
+          setOrders(json.data || []);
+        }
       } catch (err) {
         console.error(err);
       } finally {

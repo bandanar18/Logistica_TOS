@@ -4,6 +4,8 @@ import DashboardLayout from '../../../layouts/DashboardLayout/DashboardLayout';
 import { useAuth } from '../../../context/AuthContext';
 import '../Client/ClientDashboard.css';
 
+import API_BASE_URL from '../../../config/api';
+
 export default function StoreServicesPage() {
   const { token } = useAuth();
   const [services, setServices] = useState([]);
@@ -24,10 +26,13 @@ export default function StoreServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const res = await fetch('http://localhost:3000/services/store', {
+      const res = await fetch(`${API_BASE_URL}/services/store`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) setServices(await res.json());
+      if (res.ok) {
+        const json = await res.json();
+        setServices(json.data || []);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -35,14 +40,13 @@ export default function StoreServicesPage() {
 
   const fetchCatalogs = async () => {
     try {
-      const res = await fetch('http://localhost:3000/catalogs/SERVICE_CATEGORIES');
+      const res = await fetch(`${API_BASE_URL}/catalogs/SERVICE_CATEGORIES`);
       if (res.ok) {
-        const data = await res.json();
-        if (data && data.items) {
-          setCategories(data.items);
-          if (data.items.length > 0 && !editingId) {
-            setForm(prev => ({ ...prev, categoryId: data.items[0].id }));
-          }
+        const json = await res.json();
+        const items = json.data?.items || [];
+        setCategories(items);
+        if (items.length > 0 && !editingId) {
+          setForm(prev => ({ ...prev, categoryId: items[0].id }));
         }
       }
     } catch (err) {
@@ -57,7 +61,7 @@ export default function StoreServicesPage() {
   const handleSave = async () => {
     try {
       const method = editingId ? 'PATCH' : 'POST';
-      const url = editingId ? `http://localhost:3000/services/${editingId}` : 'http://localhost:3000/services';
+      const url = editingId ? `${API_BASE_URL}/services/${editingId}` : `${API_BASE_URL}/services`;
       
       const payload = {
         name: form.name,
@@ -82,7 +86,8 @@ export default function StoreServicesPage() {
         await fetchServices();
         handleCloseModal();
       } else {
-        alert('Error al guardar servicio');
+        const json = await res.json();
+        alert(json.message || 'Error al guardar servicio');
       }
     } catch (err) {
       console.error(err);
@@ -107,7 +112,7 @@ export default function StoreServicesPage() {
   const handleDelete = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este servicio?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/services/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -119,7 +124,7 @@ export default function StoreServicesPage() {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const res = await fetch(`http://localhost:3000/services/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${id}`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',

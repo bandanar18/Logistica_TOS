@@ -1,12 +1,13 @@
 import { Yard } from './yard.entity';
+import { MasterCatalogItem } from '../../catalogs/entities/master-catalog-item.entity';
 export declare class Container {
     id: number;
     containerNumber: string;
-    type: string;
-    loadStatus: string;
+    type: MasterCatalogItem;
+    loadStatus: MasterCatalogItem;
     yard: Yard;
     locationInYard: string;
-    status: string;
+    status: MasterCatalogItem;
     createdAt: Date;
     updatedAt: Date;
 }

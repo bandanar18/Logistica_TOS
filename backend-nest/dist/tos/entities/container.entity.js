@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Container = void 0;
 const typeorm_1 = require("typeorm");
 const yard_entity_1 = require("./yard.entity");
+const master_catalog_item_entity_1 = require("../../catalogs/entities/master-catalog-item.entity");
 let Container = class Container {
     id;
     containerNumber;
@@ -33,12 +34,14 @@ __decorate([
     __metadata("design:type", String)
 ], Container.prototype, "containerNumber", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.ManyToOne)(() => master_catalog_item_entity_1.MasterCatalogItem),
+    (0, typeorm_1.JoinColumn)({ name: 'type_id' }),
+    __metadata("design:type", master_catalog_item_entity_1.MasterCatalogItem)
 ], Container.prototype, "type", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'empty' }),
-    __metadata("design:type", String)
+    (0, typeorm_1.ManyToOne)(() => master_catalog_item_entity_1.MasterCatalogItem),
+    (0, typeorm_1.JoinColumn)({ name: 'load_status_id' }),
+    __metadata("design:type", master_catalog_item_entity_1.MasterCatalogItem)
 ], Container.prototype, "loadStatus", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => yard_entity_1.Yard, { nullable: true }),
@@ -50,8 +53,9 @@ __decorate([
     __metadata("design:type", String)
 ], Container.prototype, "locationInYard", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'available' }),
-    __metadata("design:type", String)
+    (0, typeorm_1.ManyToOne)(() => master_catalog_item_entity_1.MasterCatalogItem),
+    (0, typeorm_1.JoinColumn)({ name: 'status_id' }),
+    __metadata("design:type", master_catalog_item_entity_1.MasterCatalogItem)
 ], Container.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),

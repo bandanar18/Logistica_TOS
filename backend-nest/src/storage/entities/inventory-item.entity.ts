@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Warehouse } from './warehouse.entity';
 import { StorageLocation } from './storage-location.entity';
 import { Order } from '../../orders/entities/order.entity';
+import { MasterCatalogItem } from '../../catalogs/entities/master-catalog-item.entity';
 
 @Entity('inventory_items')
 export class InventoryItem {
@@ -17,8 +18,9 @@ export class InventoryItem {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   quantity: number;
 
-  @Column()
-  unit: string;
+  @ManyToOne(() => MasterCatalogItem)
+  @JoinColumn({ name: 'unit_id' })
+  unit: MasterCatalogItem;
 
   @ManyToOne(() => Warehouse)
   @JoinColumn({ name: 'warehouse_id' })

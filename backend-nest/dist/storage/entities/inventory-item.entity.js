@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const warehouse_entity_1 = require("./warehouse.entity");
 const storage_location_entity_1 = require("./storage-location.entity");
 const order_entity_1 = require("../../orders/entities/order.entity");
+const master_catalog_item_entity_1 = require("../../catalogs/entities/master-catalog-item.entity");
 let InventoryItem = class InventoryItem {
     id;
     sku;
@@ -44,8 +45,9 @@ __decorate([
     __metadata("design:type", Number)
 ], InventoryItem.prototype, "quantity", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.ManyToOne)(() => master_catalog_item_entity_1.MasterCatalogItem),
+    (0, typeorm_1.JoinColumn)({ name: 'unit_id' }),
+    __metadata("design:type", master_catalog_item_entity_1.MasterCatalogItem)
 ], InventoryItem.prototype, "unit", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => warehouse_entity_1.Warehouse),

@@ -7,6 +7,6 @@ export declare class SearchController {
     private readonly storesService;
     constructor(servicesService: ServicesService, catalogsService: CatalogsService, storesService: StoresService);
     searchServices(query: any): Promise<import("../services/entities/service.entity").Service[]>;
-    searchCategories(): Promise<any>;
+    searchCategories(): Promise<import("../catalogs/entities/master-catalog.entity").MasterCatalog | null>;
     searchStores(query: any): Promise<import("../stores/entities/store.entity").Store[]>;
 }

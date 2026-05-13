@@ -5,6 +5,8 @@ import AppLayout from '../../layouts/AppLayout/AppLayout';
 import ServiceResultCard from '../../components/ServiceResultCard/ServiceResultCard';
 import './HomePage.css';
 
+import API_BASE_URL from '../../config/api';
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,14 +21,23 @@ export default function HomePage() {
     const fetchData = async () => {
       try {
         const [resCat, resPorts, resServices] = await Promise.all([
-          fetch('http://localhost:3000/catalogs/SERVICE_CATEGORIES'),
-          fetch('http://localhost:3000/catalogs/PORTS'),
-          fetch('http://localhost:3000/services/search')
+          fetch(`${API_BASE_URL}/search/categories`),
+          fetch(`${API_BASE_URL}/catalogs/PORTS`),
+          fetch(`${API_BASE_URL}/search/services`)
         ]);
 
-        if (resCat.ok) setCategories((await resCat.json()).items || []);
-        if (resPorts.ok) setPorts((await resPorts.json()).items || []);
-        if (resServices.ok) setFeaturedServices((await resServices.json()).slice(0, 3));
+        if (resCat.ok) {
+          const json = await resCat.json();
+          setCategories(json.data?.items || []);
+        }
+        if (resPorts.ok) {
+          const json = await resPorts.json();
+          setPorts(json.data?.items || []);
+        }
+        if (resServices.ok) {
+          const json = await resServices.json();
+          setFeaturedServices((json.data || []).slice(0, 3));
+        }
       } catch (err) {
         console.error(err);
       } finally {
