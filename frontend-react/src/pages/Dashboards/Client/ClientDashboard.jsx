@@ -9,29 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 import PaymentModal from '../../../components/PaymentModal/PaymentModal';
 import './ClientDashboard.css';
 
-const STATUS_COLORS = {
-  // Quotations
-  pending: 'badge-warning',
-  responded: 'badge-info',
-  approved: 'badge-success',
-  rejected: 'badge-danger',
-  order_created: 'badge-muted',
-  // Orders
-  in_progress: 'badge-info',
-  completed: 'badge-success',
-  cancelled: 'badge-danger',
-};
-
-const STATUS_LABELS = {
-  pending: 'Pendiente',
-  responded: 'Respondida',
-  approved: 'Aprobada',
-  rejected: 'Rechazada',
-  order_created: 'En Orden',
-  in_progress: 'En Proceso',
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-};
+import { STATUS_COLORS, STATUS_LABELS } from '../../../config/statusConstants';
 
 function StatCard({ icon, label, value, change, color }) {
   return (
@@ -87,8 +65,8 @@ export default function ClientDashboard() {
     fetchData();
   }, [token]);
 
-  const pendingQuotations = quotations.filter(q => q.status === 'responded').length;
-  const activeOrders = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length;
+  const pendingQuotations = quotations.filter(q => q.status === 'RESPONDED').length;
+  const activeOrders = orders.filter(o => o.operationalStatus !== 'CLOSED' && o.operationalStatus !== 'CANCELLED').length;
 
   return (
     <DashboardLayout title="Mi Dashboard">
@@ -118,7 +96,7 @@ export default function ClientDashboard() {
       <div className="stats-grid">
         <StatCard icon={<FileText size={22} />} label="Cotizaciones" value={quotations.length} color="var(--color-primary)" />
         <StatCard icon={<ClipboardList size={22} />} label="Órdenes activas" value={activeOrders} color="var(--color-info)" />
-        <StatCard icon={<CheckCircle size={22} />} label="Completadas" value={orders.filter(o=>o.status==='completed').length} color="var(--color-accent)" />
+        <StatCard icon={<CheckCircle size={22} />} label="Completadas" value={orders.filter(o=>o.operationalStatus==='CLOSED').length} color="var(--color-accent)" />
       </div>
 
       <div className="dash-grid-2">
@@ -133,13 +111,13 @@ export default function ClientDashboard() {
               quotations.slice(0, 4).map(q => (
               <div key={q.id} className="dash-table-row">
                 <div>
-                  <p className="font-semibold text-sm">COT-{String(q.id).padStart(4, '0')}</p>
+                  <p className="font-semibold text-sm">{q.quotationCode || `COT-${String(q.id).padStart(4, '0')}`}</p>
                   <p className="text-xs text-muted">{q.service?.name}</p>
                   <p className="text-xs text-muted">{q.store?.legalName}</p>
                 </div>
                 <div className="text-right">
                   <span className={`badge ${STATUS_COLORS[q.status] || 'badge-muted'}`}>{STATUS_LABELS[q.status]}</span>
-                  {q.price && <p className="text-xs text-muted mt-1">USD {q.price}</p>}
+                  {q.totalAmount && <p className="text-xs text-muted mt-1">USD {q.totalAmount}</p>}
                 </div>
               </div>
             ))}
@@ -157,17 +135,22 @@ export default function ClientDashboard() {
               orders.map(order => (
               <div key={order.id} className="dash-table-row">
                 <div>
-                  <p className="font-semibold text-sm">ORD-{String(order.id).padStart(4, '0')}</p>
+                  <p className="font-semibold text-sm">{order.orderCode || `ORD-${String(order.id).padStart(4, '0')}`}</p>
                   <p className="text-xs text-muted">{order.service?.name}</p>
                   <p className="text-xs text-muted">{order.store?.legalName}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`badge ${STATUS_COLORS[order.status] || 'badge-muted'}`}>{STATUS_LABELS[order.status]}</span>
-                  <p className="text-xs text-muted mt-1">USD {order.finalPrice}</p>
-                  {order.status === 'pending' && (
+                  <span className={`badge ${STATUS_COLORS[order.operationalStatus] || 'badge-muted'}`}>
+                    {STATUS_LABELS[order.operationalStatus]}
+                  </span>
+                  <p className="text-xs text-muted mt-1">USD {order.totalAmount}</p>
+                  {order.financialStatus === 'UNPAID' && (
                     <button className="btn btn-primary btn-xs mt-2" onClick={() => handlePay(order)}>
                       Reportar Pago
                     </button>
+                  )}
+                  {order.financialStatus === 'SUBMITTED' && (
+                    <span className="badge badge-warning block mt-2 text-xs">Pago en revisión</span>
                   )}
                 </div>
               </div>

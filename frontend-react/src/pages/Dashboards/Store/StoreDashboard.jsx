@@ -5,27 +5,7 @@ import DashboardLayout from '../../../layouts/DashboardLayout/DashboardLayout';
 import { useAuth } from '../../../context/AuthContext';
 import '../Client/ClientDashboard.css';
 
-const STATUS_COLORS = {
-  pending: 'badge-warning',
-  responded: 'badge-info',
-  approved: 'badge-success',
-  rejected: 'badge-danger',
-  order_created: 'badge-muted',
-  in_progress: 'badge-info',
-  completed: 'badge-success',
-  cancelled: 'badge-danger',
-};
-
-const STATUS_LABELS = {
-  pending: 'Pendiente',
-  responded: 'Respondida',
-  approved: 'Aprobada',
-  rejected: 'Rechazada',
-  order_created: 'En Orden',
-  in_progress: 'En Proceso',
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-};
+import { STATUS_COLORS, STATUS_LABELS } from '../../../config/statusConstants';
 
 import API_BASE_URL from '../../../config/api';
 
@@ -73,8 +53,8 @@ export default function StoreDashboard() {
 
       <div className="stats-grid">
         {[
-          { icon: <FileText size={22} />, label: 'Solicitudes', value: quotations.length, change: `${quotations.filter(q=>q.status==='pending').length} sin responder`, color: 'var(--color-warning)' },
-          { icon: <ClipboardList size={22} />, label: 'Órdenes activas', value: orders.filter(o=>o.status==='in_progress').length, change: 'En ejecución', color: 'var(--color-info)' },
+          { icon: <FileText size={22} />, label: 'Solicitudes', value: quotations.length, change: `${quotations.filter(q=>q.status==='REQUESTED').length} sin responder`, color: 'var(--color-warning)' },
+          { icon: <ClipboardList size={22} />, label: 'Órdenes activas', value: orders.filter(o=>o.operationalStatus!=='CLOSED' && o.operationalStatus!=='CANCELLED').length, change: 'En ejecución', color: 'var(--color-info)' },
           { icon: <CreditCard size={22} />, label: 'Ingresos este mes', value: '$0', change: 'USD', color: 'var(--color-success)' },
           { icon: <Star size={22} />, label: 'Calificación', value: '5.0/5', change: 'Nueva tienda', color: 'var(--color-accent)' },
         ].map((s, i) => (
@@ -92,7 +72,7 @@ export default function StoreDashboard() {
       <div className="dash-grid-2">
         <div className="dash-section">
           <div className="section-header">
-            <h3 className="section-title" style={{ fontSize: '1rem' }}>Cotizaciones pendientes</h3>
+            <h3 className="section-title" style={{ fontSize: '1rem' }}>Solicitudes recientes</h3>
             <Link to="/dashboard/store/quotations" className="btn btn-ghost btn-sm">Ver todas</Link>
           </div>
           <div className="dash-table">
@@ -100,8 +80,8 @@ export default function StoreDashboard() {
               quotations.slice(0, 4).map(q => (
               <div key={q.id} className="dash-table-row">
                 <div>
-                  <p className="font-semibold text-sm">COT-{q.id.toString().padStart(4, '0')}</p>
-                  <p className="text-xs text-muted">{q.client?.name}</p>
+                  <p className="font-semibold text-sm">{q.quotationCode || `COT-${q.id.toString().padStart(4, '0')}`}</p>
+                  <p className="text-xs text-muted">{q.client?.firstName} {q.client?.lastName}</p>
                   <p className="text-xs text-muted">{q.service?.name}</p>
                 </div>
                 <div className="text-right">

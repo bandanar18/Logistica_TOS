@@ -7,6 +7,9 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ unique: true, nullable: true })
+  paymentCode: string;
+
   @ManyToOne(() => Order)
   @JoinColumn({ name: 'order_id' })
   order: Order;
@@ -22,20 +25,19 @@ export class Payment {
   currency: string;
 
   @Column()
-  paymentMethod: string; // bank_transfer, zelle, cash, etc.
+  paymentMethod: string; // BANK_TRANSFER, CASH, etc.
 
   @Column({ nullable: true })
-  reference: string;
+  paymentReference: string;
 
   @Column({ nullable: true })
   receiptUrl: string;
 
-  @Column({
-    type: 'enum',
-    enum: ['pending', 'confirmed', 'rejected'],
-    default: 'pending',
-  })
-  status: string;
+  @Column({ default: 'CREATED' })
+  status: string; // CREATED, SUBMITTED, IN_REVIEW, CONFIRMED, REJECTED
+
+  @Column({ type: 'text', nullable: true })
+  rejectionReason: string;
 
   @Column({ type: 'timestamp', nullable: true })
   confirmedAt: Date;

@@ -31,6 +31,11 @@ const documents_module_1 = require("./documents/documents.module");
 const reports_module_1 = require("./reports/reports.module");
 const commissions_module_1 = require("./commissions/commissions.module");
 const search_module_1 = require("./search/search.module");
+const vehicles_module_1 = require("./vehicles/vehicles.module");
+const drivers_module_1 = require("./drivers/drivers.module");
+const drivers_controller_1 = require("./drivers/drivers.controller");
+const warehouses_module_1 = require("./warehouses/warehouses.module");
+const storage_locations_module_1 = require("./storage_locations/storage_locations.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -67,9 +72,16 @@ exports.AppModule = AppModule = __decorate([
             reports_module_1.ReportsModule,
             commissions_module_1.CommissionsModule,
             search_module_1.SearchModule,
+            vehicles_module_1.VehiclesModule,
+            drivers_module_1.DriversModule,
+            warehouses_module_1.WarehousesModule,
+            storage_locations_module_1.StorageLocationsModule,
         ],
-        controllers: [app_controller_1.AppController],
+        controllers: [app_controller_1.AppController, drivers_controller_1.DriversController],
         providers: [app_service_1.AppService],
     })
 ], AppModule);
+class AppModule {
+}
+exports.AppModule = AppModule;
 //# sourceMappingURL=app.module.js.map

@@ -5,11 +5,61 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../../layouts/DashboardLayout/DashboardLayout';
-import { MOCK_REPORTS_SUMMARY, MOCK_STORES, MOCK_AUDIT_LOGS, STATUS_COLORS } from '../../../data/mockData';
+import { STATUS_COLORS, STATUS_LABELS } from '../../../config/statusConstants';
+import API_BASE_URL from '../../../config/api';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import { MOCK_REPORTS_SUMMARY, MOCK_STORES, MOCK_AUDIT_LOGS } from '../../../data/mockData';
 import '../Client/ClientDashboard.css';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
+  const { token } = useAuth();
+  const [payments, setPayments] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const [pRes, aRes, sRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/payments`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/audit`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/reports/summary`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
+
+      if (pRes.ok) {
+        const json = await pRes.json();
+        setPayments(json.filter(p => p.status === 'SUBMITTED' || p.status === 'IN_REVIEW') || []);
+      }
+      if (aRes.ok) setAuditLogs(await aRes.json());
+      if (sRes.ok) setSummary(await sRes.json());
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [token]);
+
+  const handleConfirmPayment = async (id) => {
+    if (window.confirm('¿Confirmar recibo de pago?')) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/payments/${id}/confirm`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) fetchData();
+      } catch (err) {
+          console.error(err);
+      }
+    }
+  };
+
   return (
     <DashboardLayout title="Dashboard Global">
       <div className="dash-welcome">
@@ -47,29 +97,24 @@ export default function AdminDashboard() {
       </div>
 
       <div className="dash-grid-2">
-        {/* Stores to Approve */}
+        {/* Payments to Review (Doc 24) */}
         <div className="dash-section">
           <div className="section-header">
-            <h3 className="section-title" style={{ fontSize: '1rem' }}>Tiendas pendientes de aprobación</h3>
-            <Link to="/admin/stores" className="btn btn-ghost btn-sm">Ver todas</Link>
+            <h3 className="section-title" style={{ fontSize: '1rem' }}>Pagos por validar</h3>
+            <Link to="/admin/payments" className="btn btn-ghost btn-sm">Ver todos</Link>
           </div>
           <div className="dash-table">
-            {[
-              { name: 'NavierMar C.A.', category: 'Naviera', date: '2026-05-11', status: 'Pendiente de revisión' },
-              { name: 'LogiDoc Venezuela', category: 'Documentación', date: '2026-05-10', status: 'Pendiente de revisión' },
-              { name: 'FiscoStore Maracaibo', category: 'Almacenamiento', date: '2026-05-09', status: 'Pendiente de revisión' },
-            ].map((store, i) => (
+            {payments.length === 0 ? <p className="p-4 text-sm text-muted">No hay pagos pendientes de revisión.</p> :
+              payments.map((p, i) => (
               <div key={i} className="dash-table-row">
                 <div>
-                  <p className="font-semibold text-sm">{store.name}</p>
-                  <p className="text-xs text-muted">{store.category} · {store.date}</p>
+                  <p className="font-semibold text-sm">{p.paymentCode}</p>
+                  <p className="text-xs text-muted">Order: {p.order?.orderCode} · USD {p.amount}</p>
+                  <a href={p.receiptUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Ver Comprobante</a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="btn btn-sm btn-primary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
-                    Aprobar
-                  </button>
-                  <button className="btn btn-sm btn-danger" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
-                    Rechazar
+                  <button onClick={() => handleConfirmPayment(p.id)} className="btn btn-sm btn-primary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                    Confirmar
                   </button>
                 </div>
               </div>

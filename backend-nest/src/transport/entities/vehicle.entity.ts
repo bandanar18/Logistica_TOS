@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Store } from '../../stores/entities/store.entity';
 
 @Entity('vehicles')
 export class Vehicle {
@@ -6,16 +7,28 @@ export class Vehicle {
   id: number;
 
   @Column({ unique: true })
-  plate: string;
+  vehicleCode: string;
+
+  @ManyToOne(() => Store)
+  store: Store;
 
   @Column()
-  model: string;
+  vehicleType: string; // e.g., TRUCK, VAN, MOTORCYCLE
 
   @Column()
-  type: string; // Truck, Van, etc.
+  plateNumber: string;
 
-  @Column({ default: 'active' })
-  status: string;
+  @Column({ nullable: true })
+  capacityWeight: number;
+
+  @Column({ nullable: true })
+  capacityVolume: number;
+
+  @Column({ default: 'ACTIVE' })
+  status: string; // ACTIVE, MAINTENANCE, INACTIVE
+
+  @Column({ type: 'date', nullable: true })
+  insuranceExpiration: Date;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { TransportService } from '../transport/transport.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
@@ -14,89 +15,152 @@ export class OrdersService {
     private ordersRepository: Repository<Order>,
     @InjectRepository(Payment)
     private paymentsRepository: Repository<Payment>,
+    @Inject(forwardRef(() => TransportService))
+    private transportService: TransportService,
     private auditService: AuditService,
   ) {}
-
-  async createFromQuotation(quotation: Quotation): Promise<Order> {
-    const existing = await this.ordersRepository.findOne({ where: { quotation: { id: quotation.id } } });
-    if (existing) return existing;
-    const order = this.ordersRepository.create({
-      quotation,
-      client: quotation.client,
-      store: quotation.store,
-      service: quotation.service,
-      finalPrice: quotation.price,
-      status: 'pending',
-    });
-    const saved = await this.ordersRepository.save(order) as any;
-    await this.auditService.log({
-      module: 'orders',
-      action: 'order.created',
-      entityType: 'order',
-      entityId: saved.id.toString(),
-      details: { quotationId: quotation.id }
-    });
-    return saved;
-  }
 
   private userId(user: any): number {
     return user.sub || user.id;
   }
 
-  async findAllForUser(user: any): Promise<Order[]> {
-    if (user.role === 'admin' || user.role?.name === 'admin') {
-      return this.ordersRepository.find({
-        relations: ['client', 'service', 'quotation', 'store'],
-        order: { createdAt: 'DESC' },
-      });
-    }
-    if (user.role === 'store' || user.role?.name === 'store') {
-       return this.ordersRepository.find({
-        where: { store: { owner: { id: this.userId(user) } } },
-        relations: ['client', 'service', 'quotation', 'store'],
-        order: { createdAt: 'DESC' },
-      });
-    }
-    return this.ordersRepository.find({
-      where: { client: { id: this.userId(user) } },
-      relations: ['store', 'service', 'quotation'],
-      order: { createdAt: 'DESC' },
+  private async generateOrderCode(): Promise<string> {
+    const year = new Date().getFullYear();
+    const count = await this.ordersRepository.count();
+    return `ORD-${year}-${(count + 1).toString().padStart(4, '0')}`;
+  }
+
+  async createFromQuotation(quotation: Quotation): Promise<Order> {
+    const existing = await this.ordersRepository.findOne({ where: { quotation: { id: quotation.id } } });
+    if (existing) return existing;
+
+    const order = this.ordersRepository.create({
+      orderCode: await this.generateOrderCode(),
+      quotation,
+      client: quotation.client,
+      store: quotation.store,
+      service: quotation.service,
+      subtotalAmount: quotation.subtotalAmount,
+      taxAmount: quotation.taxAmount,
+      commissionAmount: quotation.commissionAmount,
+      totalAmount: quotation.totalAmount,
+      providerNetAmount: (quotation.subtotalAmount || 0) - (quotation.commissionAmount || 0),
+      currency: quotation.currency,
+      operationalStatus: 'CREATED',
+      financialStatus: 'UNPAID',
+      documentStatus: quotation.status === 'CONVERTED' ? 'VALIDATED' : 'PENDING',
     });
+
+    const saved = await this.ordersRepository.save(order);
+    await this.auditService.log({
+      module: 'orders',
+      action: 'order.created',
+      entityType: 'order',
+      entityId: saved.id.toString(),
+      entityCode: saved.orderCode,
+      severity: 'HIGH',
+      newValues: { quotationCode: quotation.quotationCode, totalAmount: saved.totalAmount }
+    });
+    return saved;
+  }
+
+  async findAllForUser(user: any): Promise<Order[]> {
+    const qb = this.ordersRepository.createQueryBuilder('o')
+      .leftJoinAndSelect('o.client', 'client')
+      .leftJoinAndSelect('o.store', 'store')
+      .leftJoinAndSelect('o.service', 'service')
+      .leftJoinAndSelect('o.quotation', 'quotation')
+      .leftJoinAndSelect('o.currency', 'currency')
+      .orderBy('o.createdAt', 'DESC');
+
+    if (user.role === 'admin') {
+      // All
+    } else if (user.role === 'store') {
+      qb.where('store.ownerId = :ownerId', { ownerId: this.userId(user) });
+    } else {
+      qb.where('client.id = :clientId', { clientId: this.userId(user) });
+    }
+
+    return qb.getMany();
   }
 
   async findOne(id: number): Promise<Order> {
     const o = await this.ordersRepository.findOne({
       where: { id },
-      relations: ['client', 'store', 'store.owner', 'service', 'quotation'],
+      relations: ['client', 'store', 'store.owner', 'service', 'quotation', 'currency'],
     });
     if (!o) throw new NotFoundException('Order not found');
     return o;
   }
 
+  async start(id: number, user: any): Promise<Order> {
+    const o = await this.findOne(id);
+    if (user.role !== 'admin' && o.store?.owner?.id !== this.userId(user)) {
+      throw new ForbiddenException('Only the store owner can start this order');
+    }
+    if (o.operationalStatus !== 'CREATED') throw new BadRequestException('Order already started or invalid status');
+    
+    const oldStatus = o.operationalStatus;
+    o.operationalStatus = 'IN_PROCESS';
+    o.startedAt = new Date();
+    
+    const saved = await this.ordersRepository.save(o);
+
+    await this.auditService.log({
+      user: { id: this.userId(user) } as User,
+      module: 'orders',
+      action: 'order.started',
+      entityType: 'order',
+      entityId: id.toString(),
+      entityCode: saved.orderCode,
+      oldValues: { status: oldStatus },
+      newValues: { status: saved.operationalStatus },
+      severity: 'MEDIUM'
+    });
+
+    // If it's a transport order, create a trip
+    if (o.service?.category?.itemCode === 'TRANSPORT_SERVICE') {
+       await this.transportService.createTrip({
+          order: saved,
+          carrier: o.store,
+          tripType: 'STANDARD',
+          originName: 'PORT', // Default values or from metadata
+          originAddress: 'PORT AREA',
+          destinationName: 'WAREHOUSE',
+          destinationAddress: 'CLIENT AREA',
+          status: 'CREATED'
+       }, user as any);
+    }
+
+    return saved;
+  }
+
   async updateStatus(id: number, status: string, user: any): Promise<Order> {
     const o = await this.findOne(id);
     if (user.role !== 'admin' && o.store?.owner?.id !== this.userId(user)) {
-      throw new ForbiddenException('Only the store owner can update this order');
+      throw new ForbiddenException('Only authorized users can update this order');
     }
-    if (status === 'in_progress') {
-      const confirmedPayments = await this.paymentsRepository.find({ where: { order: { id }, status: 'confirmed' } });
-      const paid = confirmedPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
-      if (paid < Number(o.finalPrice)) {
-        throw new ForbiddenException('Order cannot start until payment is fully confirmed');
-      }
+
+    const oldStatus = o.operationalStatus;
+    // Operational transitions
+    const validOps = ['IN_PROCESS', 'EXECUTING', 'ON_HOLD', 'CLOSED', 'CANCELLED'];
+    if (validOps.includes(status)) {
+      o.operationalStatus = status;
+      if (status === 'CLOSED') o.closedAt = new Date();
+      if (status === 'CANCELLED') o.cancelledAt = new Date();
     }
-    o.status = status;
-    if (status === 'completed') {
-      o.completedAt = new Date();
-    }
-    const saved = await this.ordersRepository.save(o) as any;
+
+    const saved = await this.ordersRepository.save(o);
     await this.auditService.log({
       user: { id: this.userId(user) } as User,
       module: 'orders',
       action: 'order.status_changed',
       entityType: 'order',
       entityId: id.toString(),
-      details: { status }
+      entityCode: saved.orderCode,
+      oldValues: { status: oldStatus },
+      newValues: { status: saved.operationalStatus },
+      severity: (status === 'CLOSED' || status === 'CANCELLED') ? 'CRITICAL' : 'HIGH'
     });
     return saved;
   }

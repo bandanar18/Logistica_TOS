@@ -23,6 +23,23 @@ export class StorageService {
     return this.itemRepo.find({ relations: ['warehouse', 'location', 'order'] });
   }
 
+  async generateWarehouseCode(): Promise<string> {
+    const count = await this.warehouseRepo.count();
+    return `WH-${(count + 1).toString().padStart(3, '0')}`;
+  }
+
+  async createWarehouse(data: any, user: User): Promise<Warehouse> {
+    const warehouseCode = await this.generateWarehouseCode();
+    const warehouse = this.warehouseRepo.create({ ...data, warehouseCode });
+    return this.warehouseRepo.save(warehouse);
+  }
+
+  async generateLocationCode(warehouseId: number, zone: string, aisle: string): Promise<string> {
+    const warehouse = await this.warehouseRepo.findOneBy({ id: warehouseId });
+    const count = await this.locationRepo.count({ where: { warehouse: { id: warehouseId } } });
+    return `${warehouse?.warehouseCode}-${zone}-${aisle}-${(count + 1).toString().padStart(3, '0')}`;
+  }
+
   async receiveItem(data: any, user: User): Promise<InventoryItem> {
     const item = this.itemRepo.create(data);
     const saved = await this.itemRepo.save(item) as any;
@@ -65,6 +82,10 @@ export class StorageService {
   }
 
   async findAllWarehouses(): Promise<Warehouse[]> {
-    return this.warehouseRepo.find();
+    return this.warehouseRepo.find({ relations: ['store'] });
+  }
+
+  async findAllLocations(warehouseId: number): Promise<StorageLocation[]> {
+    return this.locationRepo.find({ where: { warehouse: { id: warehouseId } } });
   }
 }

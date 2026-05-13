@@ -88,3 +88,41 @@ export declare const MVP_SERVICES_DATA: {
     requiredDocuments: string[];
     status: string;
 }[];
+export declare const ECOSYSTEM_ACTORS_DATA: {
+    code: string;
+    name: string;
+    type: string;
+}[];
+export declare const GLOBAL_SETTINGS_DATA: {
+    key: string;
+    value: string;
+    description: string;
+}[];
+export declare const COMMISSION_RULES_DATA: ({
+    ruleCode: string;
+    ruleName: string;
+    commissionType: string;
+    percentage: number;
+    priority: number;
+    status: string;
+    serviceCategory?: undefined;
+    fixedAmount?: undefined;
+} | {
+    ruleCode: string;
+    ruleName: string;
+    commissionType: string;
+    percentage: number;
+    serviceCategory: string;
+    priority: number;
+    status: string;
+    fixedAmount?: undefined;
+} | {
+    ruleCode: string;
+    ruleName: string;
+    commissionType: string;
+    fixedAmount: number;
+    serviceCategory: string;
+    priority: number;
+    status: string;
+    percentage?: undefined;
+})[];

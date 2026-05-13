@@ -8,8 +8,10 @@ export declare class PaymentsService {
     private auditService;
     constructor(paymentsRepository: Repository<Payment>, ordersRepository: Repository<Order>, auditService: AuditService);
     private userId;
+    generatePaymentCode(): Promise<string>;
     create(createDto: any, client: any): Promise<Payment>;
     findAllForUser(user: any): Promise<Payment[]>;
+    startReview(id: number, user: any): Promise<Payment>;
     confirm(id: number, user: any): Promise<Payment>;
     reject(id: number, reason: string, user: any): Promise<Payment>;
 }

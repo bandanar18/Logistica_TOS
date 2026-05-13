@@ -11,19 +11,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Trip = void 0;
 const typeorm_1 = require("typeorm");
+const order_entity_1 = require("../../orders/entities/order.entity");
 const vehicle_entity_1 = require("./vehicle.entity");
 const driver_entity_1 = require("./driver.entity");
-const order_entity_1 = require("../../orders/entities/order.entity");
+const store_entity_1 = require("../../stores/entities/store.entity");
 let Trip = class Trip {
     id;
-    origin;
-    destination;
+    tripCode;
+    order;
+    carrier;
     vehicle;
     driver;
-    order;
+    tripType;
+    originName;
+    originAddress;
+    destinationName;
+    destinationAddress;
+    scheduledPickupAt;
+    scheduledDeliveryAt;
+    actualPickupAt;
+    actualDeliveryAt;
     status;
-    startedAt;
-    completedAt;
+    notes;
     createdAt;
     updatedAt;
 };
@@ -33,40 +42,69 @@ __decorate([
     __metadata("design:type", Number)
 ], Trip.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], Trip.prototype, "origin", void 0);
+], Trip.prototype, "tripCode", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], Trip.prototype, "destination", void 0);
+    (0, typeorm_1.ManyToOne)(() => order_entity_1.Order),
+    __metadata("design:type", order_entity_1.Order)
+], Trip.prototype, "order", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => store_entity_1.Store),
+    __metadata("design:type", store_entity_1.Store)
+], Trip.prototype, "carrier", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => vehicle_entity_1.Vehicle, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'vehicle_id' }),
     __metadata("design:type", vehicle_entity_1.Vehicle)
 ], Trip.prototype, "vehicle", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => driver_entity_1.Driver, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'driver_id' }),
     __metadata("design:type", driver_entity_1.Driver)
 ], Trip.prototype, "driver", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => order_entity_1.Order, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'order_id' }),
-    __metadata("design:type", order_entity_1.Order)
-], Trip.prototype, "order", void 0);
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Trip.prototype, "tripType", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'scheduled' }),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Trip.prototype, "originName", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Trip.prototype, "originAddress", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Trip.prototype, "destinationName", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Trip.prototype, "destinationAddress", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Trip.prototype, "scheduledPickupAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Trip.prototype, "scheduledDeliveryAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Trip.prototype, "actualPickupAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Trip.prototype, "actualDeliveryAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'CREATED' }),
     __metadata("design:type", String)
 ], Trip.prototype, "status", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
-    __metadata("design:type", Date)
-], Trip.prototype, "startedAt", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
-    __metadata("design:type", Date)
-], Trip.prototype, "completedAt", void 0);
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Trip.prototype, "notes", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

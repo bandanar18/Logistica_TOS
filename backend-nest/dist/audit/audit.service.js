@@ -17,25 +17,36 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const audit_log_entity_1 = require("./entities/audit-log.entity");
+const uuid_1 = require("uuid");
 let AuditService = class AuditService {
     auditRepository;
     constructor(auditRepository) {
         this.auditRepository = auditRepository;
     }
     async log(data) {
-        const entry = this.auditRepository.create(data);
+        const entry = this.auditRepository.create({
+            ...data,
+            auditCode: `AUD-${(0, uuid_1.v4)().split('-')[0].toUpperCase()}`,
+            severity: data.severity || 'LOW',
+        });
         return this.auditRepository.save(entry);
     }
-    async findAll() {
-        return this.auditRepository.find({
-            relations: ['user'],
-            order: { createdAt: 'DESC' },
-            take: 100,
-        });
+    async findAll(filters) {
+        const query = this.auditRepository.createQueryBuilder('audit')
+            .leftJoinAndSelect('audit.user', 'user')
+            .orderBy('audit.createdAt', 'DESC')
+            .take(100);
+        if (filters?.module)
+            query.andWhere('audit.module = :module', { module: filters.module });
+        if (filters?.severity)
+            query.andWhere('audit.severity = :severity', { severity: filters.severity });
+        if (filters?.entityType)
+            query.andWhere('audit.entityType = :entityType', { entityType: filters.entityType });
+        return query.getMany();
     }
     async findByEntity(type, id) {
         return this.auditRepository.find({
-            where: { entityType: type, entityId: id },
+            where: { entityType: type, entityId: id.toString() },
             relations: ['user'],
             order: { createdAt: 'DESC' },
         });

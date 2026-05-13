@@ -34,6 +34,20 @@ let StorageService = class StorageService {
     async findAllItems() {
         return this.itemRepo.find({ relations: ['warehouse', 'location', 'order'] });
     }
+    async generateWarehouseCode() {
+        const count = await this.warehouseRepo.count();
+        return `WH-${(count + 1).toString().padStart(3, '0')}`;
+    }
+    async createWarehouse(data, user) {
+        const warehouseCode = await this.generateWarehouseCode();
+        const warehouse = this.warehouseRepo.create({ ...data, warehouseCode });
+        return this.warehouseRepo.save(warehouse);
+    }
+    async generateLocationCode(warehouseId, zone, aisle) {
+        const warehouse = await this.warehouseRepo.findOneBy({ id: warehouseId });
+        const count = await this.locationRepo.count({ where: { warehouse: { id: warehouseId } } });
+        return `${warehouse?.warehouseCode}-${zone}-${aisle}-${(count + 1).toString().padStart(3, '0')}`;
+    }
     async receiveItem(data, user) {
         const item = this.itemRepo.create(data);
         const saved = await this.itemRepo.save(item);
@@ -69,7 +83,10 @@ let StorageService = class StorageService {
         return updated;
     }
     async findAllWarehouses() {
-        return this.warehouseRepo.find();
+        return this.warehouseRepo.find({ relations: ['store'] });
+    }
+    async findAllLocations(warehouseId) {
+        return this.locationRepo.find({ where: { warehouse: { id: warehouseId } } });
     }
 };
 exports.StorageService = StorageService;

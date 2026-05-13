@@ -26,28 +26,34 @@ let CommissionsService = class CommissionsService {
         this.ordersRepository = ordersRepository;
     }
     async findAll() {
-        const orders = await this.ordersRepository.find({ relations: ['store'] });
-        for (const order of orders) {
-            const existing = await this.commissionsRepository.findOne({ where: { order: { id: order.id } } });
-            if (!existing) {
-                await this.commissionsRepository.save(this.commissionsRepository.create({
-                    order,
-                    store: order.store,
-                    rate: 10,
-                    amount: Number(order.finalPrice) * 0.1,
-                    status: order.status === 'completed' ? 'earned' : 'pending',
-                }));
-            }
-        }
-        return this.commissionsRepository.find({ relations: ['order', 'store'], order: { createdAt: 'DESC' } });
+        return this.commissionsRepository.find({
+            relations: ['order', 'store', 'rule'],
+            order: { createdAt: 'DESC' }
+        });
+    }
+    async createForOrder(order, rate, amount, ruleId) {
+        const commission = this.commissionsRepository.create({
+            order,
+            store: order.store,
+            baseAmount: order.subtotalAmount,
+            commissionType: 'PERCENTAGE',
+            rate,
+            amount,
+            rule: ruleId ? { id: ruleId } : undefined,
+            status: 'CALCULATED',
+        });
+        return this.commissionsRepository.save(commission);
     }
     async updateStatus(id, status) {
-        if (!['pending', 'earned', 'settled', 'withheld'].includes(status))
+        const validStatuses = ['CALCULATED', 'PENDING', 'CONFIRMED', 'CANCELLED'];
+        if (!validStatuses.includes(status))
             throw new common_1.BadRequestException('Invalid commission status');
         const commission = await this.commissionsRepository.findOne({ where: { id }, relations: ['order', 'store'] });
         if (!commission)
             throw new common_1.NotFoundException('Commission not found');
         commission.status = status;
+        if (status === 'CONFIRMED')
+            commission.confirmedAt = new Date();
         return this.commissionsRepository.save(commission);
     }
 };

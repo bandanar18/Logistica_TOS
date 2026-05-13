@@ -71,8 +71,8 @@ let ReviewsService = class ReviewsService {
             throw new common_1.NotFoundException('Order not found');
         if (order.client.id !== this.userId(user))
             throw new common_1.ForbiddenException('Only the order client can review it');
-        if (order.status !== 'completed')
-            throw new common_1.BadRequestException('Only completed orders can be reviewed');
+        if (order.operationalStatus !== 'CLOSED')
+            throw new common_1.BadRequestException('Only closed orders can be reviewed');
         const existing = await this.reviewRepo.findOne({ where: { order: { id: order.id }, user: { id: this.userId(user) } } });
         if (existing)
             throw new common_1.BadRequestException('This order already has a review from this client');

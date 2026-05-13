@@ -6,12 +6,21 @@ export declare class AuditService {
     constructor(auditRepository: Repository<AuditLog>);
     log(data: {
         user?: User;
+        userProfile?: string;
         module: string;
         action: string;
         entityType?: string;
         entityId?: string;
-        details?: any;
+        entityCode?: string;
+        oldValues?: any;
+        newValues?: any;
+        changeReason?: string;
+        severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+        ipAddress?: string;
+        userAgent?: string;
+        requestId?: string;
+        metadata?: any;
     }): Promise<AuditLog>;
-    findAll(): Promise<AuditLog[]>;
+    findAll(filters?: any): Promise<AuditLog[]>;
     findByEntity(type: string, id: string): Promise<AuditLog[]>;
 }

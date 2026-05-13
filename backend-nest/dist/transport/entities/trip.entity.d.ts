@@ -1,16 +1,25 @@
+import { Order } from '../../orders/entities/order.entity';
 import { Vehicle } from './vehicle.entity';
 import { Driver } from './driver.entity';
-import { Order } from '../../orders/entities/order.entity';
+import { Store } from '../../stores/entities/store.entity';
 export declare class Trip {
     id: number;
-    origin: string;
-    destination: string;
+    tripCode: string;
+    order: Order;
+    carrier: Store;
     vehicle: Vehicle;
     driver: Driver;
-    order: Order;
+    tripType: string;
+    originName: string;
+    originAddress: string;
+    destinationName: string;
+    destinationAddress: string;
+    scheduledPickupAt: Date;
+    scheduledDeliveryAt: Date;
+    actualPickupAt: Date;
+    actualDeliveryAt: Date;
     status: string;
-    startedAt: Date;
-    completedAt: Date;
+    notes: string;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -15,6 +15,7 @@ const quotation_entity_1 = require("./entities/quotation.entity");
 const orders_module_1 = require("../orders/orders.module");
 const store_entity_1 = require("../stores/entities/store.entity");
 const service_entity_1 = require("../services/entities/service.entity");
+const commission_rules_module_1 = require("../commission_rules/commission_rules.module");
 let QuotationsModule = class QuotationsModule {
 };
 exports.QuotationsModule = QuotationsModule;
@@ -23,6 +24,7 @@ exports.QuotationsModule = QuotationsModule = __decorate([
         imports: [
             typeorm_1.TypeOrmModule.forFeature([quotation_entity_1.Quotation, store_entity_1.Store, service_entity_1.Service]),
             orders_module_1.OrdersModule,
+            commission_rules_module_1.CommissionRulesModule,
         ],
         controllers: [quotations_controller_1.QuotationsController],
         providers: [quotations_service_1.QuotationsService],

@@ -14,12 +14,22 @@ const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../../users/entities/user.entity");
 let AuditLog = class AuditLog {
     id;
+    auditCode;
     user;
+    userProfile;
     module;
     action;
     entityType;
     entityId;
-    details;
+    entityCode;
+    oldValues;
+    newValues;
+    changeReason;
+    severity;
+    ipAddress;
+    userAgent;
+    requestId;
+    metadata;
     createdAt;
 };
 exports.AuditLog = AuditLog;
@@ -28,10 +38,18 @@ __decorate([
     __metadata("design:type", Number)
 ], AuditLog.prototype, "id", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ unique: true, nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "auditCode", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     __metadata("design:type", user_entity_1.User)
 ], AuditLog.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "userProfile", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
@@ -49,9 +67,41 @@ __decorate([
     __metadata("design:type", String)
 ], AuditLog.prototype, "entityId", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "entityCode", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Object)
-], AuditLog.prototype, "details", void 0);
+], AuditLog.prototype, "oldValues", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], AuditLog.prototype, "newValues", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "changeReason", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "severity", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "ipAddress", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "userAgent", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], AuditLog.prototype, "requestId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], AuditLog.prototype, "metadata", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

@@ -22,6 +22,11 @@ import { DocumentsModule } from './documents/documents.module';
 import { ReportsModule } from './reports/reports.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { SearchModule } from './search/search.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
+import { DriversModule } from './drivers/drivers.module';
+import { DriversController } from './drivers/drivers.controller';
+import { WarehousesModule } from './warehouses/warehouses.module';
+import { StorageLocationsModule } from './storage_locations/storage_locations.module';
 
 @Module({
   imports: [
@@ -55,8 +60,15 @@ import { SearchModule } from './search/search.module';
     ReportsModule,
     CommissionsModule,
     SearchModule,
+    VehiclesModule,
+    DriversModule,
+    WarehousesModule,
+    StorageLocationsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, DriversController],
   providers: [AppService],
+})
+export class AppModule {}
+
 })
 export class AppModule {}

@@ -13,20 +13,31 @@ exports.Commission = void 0;
 const typeorm_1 = require("typeorm");
 const order_entity_1 = require("../../orders/entities/order.entity");
 const store_entity_1 = require("../../stores/entities/store.entity");
+const commission_rule_entity_1 = require("../../commission_rules/entities/commission_rule.entity");
 let Commission = class Commission {
     id;
+    commissionCode;
     order;
     store;
+    rule;
+    baseAmount;
+    commissionType;
     rate;
     amount;
     status;
+    confirmedAt;
     createdAt;
+    updatedAt;
 };
 exports.Commission = Commission;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
 ], Commission.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ unique: true, nullable: true }),
+    __metadata("design:type", String)
+], Commission.prototype, "commissionCode", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => order_entity_1.Order),
     (0, typeorm_1.JoinColumn)({ name: 'order_id' }),
@@ -38,7 +49,20 @@ __decorate([
     __metadata("design:type", store_entity_1.Store)
 ], Commission.prototype, "store", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 5, scale: 2, default: 10 }),
+    (0, typeorm_1.ManyToOne)(() => commission_rule_entity_1.CommissionRule, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'rule_id' }),
+    __metadata("design:type", commission_rule_entity_1.CommissionRule)
+], Commission.prototype, "rule", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
+    __metadata("design:type", Number)
+], Commission.prototype, "baseAmount", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Commission.prototype, "commissionType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
     __metadata("design:type", Number)
 ], Commission.prototype, "rate", void 0);
 __decorate([
@@ -46,13 +70,21 @@ __decorate([
     __metadata("design:type", Number)
 ], Commission.prototype, "amount", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'pending' }),
+    (0, typeorm_1.Column)({ default: 'CALCULATED' }),
     __metadata("design:type", String)
 ], Commission.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true }),
+    __metadata("design:type", Date)
+], Commission.prototype, "confirmedAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], Commission.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], Commission.prototype, "updatedAt", void 0);
 exports.Commission = Commission = __decorate([
     (0, typeorm_1.Entity)('commissions')
 ], Commission);

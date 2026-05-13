@@ -15,14 +15,16 @@ const user_entity_1 = require("../../users/entities/user.entity");
 const order_entity_1 = require("../../orders/entities/order.entity");
 let Payment = class Payment {
     id;
+    paymentCode;
     order;
     client;
     amount;
     currency;
     paymentMethod;
-    reference;
+    paymentReference;
     receiptUrl;
     status;
+    rejectionReason;
     confirmedAt;
     createdAt;
     updatedAt;
@@ -32,6 +34,10 @@ __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
 ], Payment.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ unique: true, nullable: true }),
+    __metadata("design:type", String)
+], Payment.prototype, "paymentCode", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => order_entity_1.Order),
     (0, typeorm_1.JoinColumn)({ name: 'order_id' }),
@@ -57,19 +63,19 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Payment.prototype, "reference", void 0);
+], Payment.prototype, "paymentReference", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Payment.prototype, "receiptUrl", void 0);
 __decorate([
-    (0, typeorm_1.Column)({
-        type: 'enum',
-        enum: ['pending', 'confirmed', 'rejected'],
-        default: 'pending',
-    }),
+    (0, typeorm_1.Column)({ default: 'CREATED' }),
     __metadata("design:type", String)
 ], Payment.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Payment.prototype, "rejectionReason", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Date)

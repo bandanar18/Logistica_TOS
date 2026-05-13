@@ -1,39 +1,61 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Order } from '../../orders/entities/order.entity';
 import { Vehicle } from './vehicle.entity';
 import { Driver } from './driver.entity';
-import { Order } from '../../orders/entities/order.entity';
+import { Store } from '../../stores/entities/store.entity';
 
 @Entity('trips')
 export class Trip {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  origin: string;
+  @Column({ unique: true })
+  tripCode: string;
 
-  @Column()
-  destination: string;
+  @ManyToOne(() => Order)
+  order: Order;
+
+  @ManyToOne(() => Store)
+  carrier: Store;
 
   @ManyToOne(() => Vehicle, { nullable: true })
-  @JoinColumn({ name: 'vehicle_id' })
   vehicle: Vehicle;
 
   @ManyToOne(() => Driver, { nullable: true })
-  @JoinColumn({ name: 'driver_id' })
   driver: Driver;
 
-  @ManyToOne(() => Order, { nullable: true })
-  @JoinColumn({ name: 'order_id' })
-  order: Order;
+  @Column()
+  tripType: string; // e.g., PORT_TO_WAREHOUSE, WAREHOUSE_TO_CLIENT
 
-  @Column({ default: 'scheduled' })
-  status: string; // scheduled, in_transit, completed, cancelled
+  @Column()
+  originName: string;
+
+  @Column()
+  originAddress: string;
+
+  @Column()
+  destinationName: string;
+
+  @Column()
+  destinationAddress: string;
 
   @Column({ type: 'datetime', nullable: true })
-  startedAt: Date;
+  scheduledPickupAt: Date;
 
   @Column({ type: 'datetime', nullable: true })
-  completedAt: Date;
+  scheduledDeliveryAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  actualPickupAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
+  actualDeliveryAt: Date;
+
+  @Column({ default: 'CREATED' })
+  status: string; // CREATED, ASSIGNED, IN_TRANSIT, DELIVERED, CLOSED, CANCELLED
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
 
   @CreateDateColumn()
   createdAt: Date;

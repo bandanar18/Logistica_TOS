@@ -32,10 +32,16 @@ let TransportService = class TransportService {
         this.auditService = auditService;
     }
     async findAllTrips() {
-        return this.tripRepo.find({ relations: ['vehicle', 'driver', 'order'] });
+        return this.tripRepo.find({ relations: ['vehicle', 'driver', 'order', 'carrier'] });
+    }
+    async generateTripCode() {
+        const count = await this.tripRepo.count();
+        const year = new Date().getFullYear();
+        return `TRP-${year}-${(count + 1).toString().padStart(4, '0')}`;
     }
     async createTrip(data, user) {
-        const trip = this.tripRepo.create(data);
+        const tripCode = await this.generateTripCode();
+        const trip = this.tripRepo.create({ ...data, tripCode });
         const saved = await this.tripRepo.save(trip);
         await this.auditService.log({
             user,
@@ -43,7 +49,7 @@ let TransportService = class TransportService {
             action: 'trip.created',
             entityType: 'trip',
             entityId: saved.id.toString(),
-            details: { origin: saved.origin, destination: saved.destination }
+            details: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
         });
         return saved;
     }
@@ -53,10 +59,10 @@ let TransportService = class TransportService {
             throw new common_1.NotFoundException('Trip not found');
         const oldStatus = trip.status;
         trip.status = status;
-        if (status === 'in_transit')
-            trip.startedAt = new Date();
-        if (status === 'completed')
-            trip.completedAt = new Date();
+        if (status === 'IN_TRANSIT')
+            trip.actualPickupAt = new Date();
+        if (status === 'DELIVERED')
+            trip.actualDeliveryAt = new Date();
         const updated = await this.tripRepo.save(trip);
         await this.auditService.log({
             user,
@@ -69,10 +75,10 @@ let TransportService = class TransportService {
         return updated;
     }
     async findAllVehicles() {
-        return this.vehicleRepo.find();
+        return this.vehicleRepo.find({ relations: ['store'] });
     }
     async findAllDrivers() {
-        return this.driverRepo.find();
+        return this.driverRepo.find({ relations: ['store'] });
     }
 };
 exports.TransportService = TransportService;

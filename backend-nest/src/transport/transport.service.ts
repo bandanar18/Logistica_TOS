@@ -20,11 +20,18 @@ export class TransportService {
   ) {}
 
   async findAllTrips(): Promise<Trip[]> {
-    return this.tripRepo.find({ relations: ['vehicle', 'driver', 'order'] });
+    return this.tripRepo.find({ relations: ['vehicle', 'driver', 'order', 'carrier'] });
+  }
+
+  async generateTripCode(): Promise<string> {
+    const count = await this.tripRepo.count();
+    const year = new Date().getFullYear();
+    return `TRP-${year}-${(count + 1).toString().padStart(4, '0')}`;
   }
 
   async createTrip(data: any, user: User): Promise<Trip> {
-    const trip = this.tripRepo.create(data);
+    const tripCode = await this.generateTripCode();
+    const trip = this.tripRepo.create({ ...data, tripCode });
     const saved = await this.tripRepo.save(trip) as any;
     
     await this.auditService.log({
@@ -33,7 +40,7 @@ export class TransportService {
       action: 'trip.created',
       entityType: 'trip',
       entityId: saved.id.toString(),
-      details: { origin: saved.origin, destination: saved.destination }
+      details: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
     });
     
     return saved;
@@ -45,8 +52,9 @@ export class TransportService {
 
     const oldStatus = trip.status;
     trip.status = status;
-    if (status === 'in_transit') trip.startedAt = new Date();
-    if (status === 'completed') trip.completedAt = new Date();
+    
+    if (status === 'IN_TRANSIT') trip.actualPickupAt = new Date();
+    if (status === 'DELIVERED') trip.actualDeliveryAt = new Date();
 
     const updated = await this.tripRepo.save(trip) as any;
 
@@ -63,10 +71,10 @@ export class TransportService {
   }
 
   async findAllVehicles(): Promise<Vehicle[]> {
-    return this.vehicleRepo.find();
+    return this.vehicleRepo.find({ relations: ['store'] });
   }
 
   async findAllDrivers(): Promise<Driver[]> {
-    return this.driverRepo.find();
+    return this.driverRepo.find({ relations: ['store'] });
   }
 }

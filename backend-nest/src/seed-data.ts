@@ -134,7 +134,9 @@ export const MASTER_CATALOGS_DATA = [
       { code: 'RESPONDED', name: 'Respondida' },
       { code: 'APPROVED', name: 'Aprobada' },
       { code: 'REJECTED', name: 'Rechazada' },
+      { code: 'EXPIRED', name: 'Expirada' },
       { code: 'CONVERTED', name: 'Convertida en orden' },
+      { code: 'CANCELLED', name: 'Cancelada' },
     ]
   },
   {
@@ -251,5 +253,57 @@ export const MVP_SERVICES_DATA = [
     slaHours: 48,
     requiredDocuments: ['PACKING_LIST'],
     status: 'published'
+  }
+];
+
+export const ECOSYSTEM_ACTORS_DATA = [
+  { code: 'ACT-PORT-001', name: 'Autoridad Portuaria', type: 'AUTHORITY' },
+  { code: 'ACT-CUST-002', name: 'Aduana Nacional', type: 'AUTHORITY' },
+  { code: 'ACT-TERM-003', name: 'Terminal de Contenedores A', type: 'TERMINAL' },
+  { code: 'ACT-YARD-004', name: 'Patio Externo Logístico', type: 'YARD' },
+];
+
+export const GLOBAL_SETTINGS_DATA = [
+  { key: 'MARKETPLACE_COMMISSION_PCT', value: '10.0', description: 'Porcentaje de comisión base del marketplace' },
+  { key: 'QUOTATION_EXPIRATION_DAYS', value: '7', description: 'Días de vigencia por defecto para cotizaciones' },
+  { key: 'VAT_PERCENTAGE', value: '16.0', description: 'Porcentaje de IVA aplicable' },
+  { key: 'SYSTEM_CURRENCY', value: 'USD', description: 'Moneda base del sistema' },
+];
+
+export const COMMISSION_RULES_DATA = [
+  {
+    ruleCode: 'COM-GLOBAL-001',
+    ruleName: 'Comisión Global Base',
+    commissionType: 'PERCENTAGE',
+    percentage: 10.0,
+    priority: 0,
+    status: 'ACTIVE'
+  },
+  {
+    ruleCode: 'COM-CUSTOMS-001',
+    ruleName: 'Comisión Servicios Aduanales',
+    commissionType: 'PERCENTAGE',
+    percentage: 12.0,
+    serviceCategory: 'CUSTOMS',
+    priority: 10,
+    status: 'ACTIVE'
+  },
+  {
+    ruleCode: 'COM-TRANSPORT-001',
+    ruleName: 'Comisión Servicios Transporte',
+    commissionType: 'PERCENTAGE',
+    percentage: 8.0,
+    serviceCategory: 'TRANSPORT',
+    priority: 10,
+    status: 'ACTIVE'
+  },
+  {
+    ruleCode: 'COM-FIXED-001',
+    ruleName: 'Tarifa Fija Especial Almacén',
+    commissionType: 'FIXED_AMOUNT',
+    fixedAmount: 25.00,
+    serviceCategory: 'STORAGE',
+    priority: 20,
+    status: 'ACTIVE'
   }
 ];

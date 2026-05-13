@@ -60,7 +60,7 @@ export class ReviewsService {
     const order = await this.orderRepo.findOne({ where: { id: +data.orderId }, relations: ['client', 'store'] });
     if (!order) throw new NotFoundException('Order not found');
     if (order.client.id !== this.userId(user)) throw new ForbiddenException('Only the order client can review it');
-    if (order.status !== 'completed') throw new BadRequestException('Only completed orders can be reviewed');
+    if (order.operationalStatus !== 'CLOSED') throw new BadRequestException('Only closed orders can be reviewed');
 
     const existing = await this.reviewRepo.findOne({ where: { order: { id: order.id }, user: { id: this.userId(user) } } });
     if (existing) throw new BadRequestException('This order already has a review from this client');

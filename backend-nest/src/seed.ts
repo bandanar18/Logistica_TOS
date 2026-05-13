@@ -21,13 +21,14 @@ import { Driver } from './transport/entities/driver.entity';
 import { Trip } from './transport/entities/trip.entity';
 import { Inspection } from './inspections/entities/inspection.entity';
 import { InspectionResult } from './inspections/entities/inspection-result.entity';
+import { CommissionRule } from './commission_rules/entities/commission_rule.entity';
 import * as bcrypt from 'bcrypt';
 import * as path from 'path';
 
-import { MASTER_CATALOGS_DATA, MVP_SERVICES_DATA } from './seed-data';
+import { MASTER_CATALOGS_DATA, MVP_SERVICES_DATA, GLOBAL_SETTINGS_DATA, ECOSYSTEM_ACTORS_DATA, COMMISSION_RULES_DATA } from './seed-data';
 
 async function seed() {
-  const dataSource = new DataSource({
+  const baseConfig: any = {
     type: 'mysql',
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT || 3306),
@@ -35,11 +36,27 @@ async function seed() {
     password: process.env.DB_PASSWORD || 'root',
     database: process.env.DB_NAME || 'logistica_tos',
     entities: [path.join(__dirname, '**/*.entity{.ts,.js}')],
-    synchronize: true,
-  });
+  };
 
+  // Phase 1: Initialize without synchronization to clear data
+  let dataSource = new DataSource({ ...baseConfig, synchronize: false });
   await dataSource.initialize();
-  console.log('Database initialized');
+  console.log('Database connected (Phase 1: Cleanup)');
+
+  await dataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+  const tables = ['trips', 'vehicles', 'drivers', 'warehouses', 'storage_locations', 'payments', 'commissions', 'inventory_items'];
+  for (const table of tables) {
+    try {
+      await dataSource.query(`TRUNCATE TABLE \`${table}\``);
+    } catch (e) {}
+  }
+  await dataSource.query('SET FOREIGN_KEY_CHECKS = 1');
+  await dataSource.destroy();
+
+  // Phase 2: Initialize with synchronization to apply new schema
+  dataSource = new DataSource({ ...baseConfig, synchronize: true });
+  await dataSource.initialize();
+  console.log('Database initialized (Phase 2: Sync & Seed)');
 
   // 1. Roles
   const roleRepo = dataSource.getRepository(Role);
@@ -79,7 +96,6 @@ async function seed() {
   // 3. Catalogs
   const catalogRepo = dataSource.getRepository(MasterCatalog);
   const catalogItemRepo = dataSource.getRepository(MasterCatalogItem);
-
   const catalogItemEntities: Record<string, MasterCatalogItem> = {};
 
   for (const catData of MASTER_CATALOGS_DATA) {
@@ -100,6 +116,16 @@ async function seed() {
     }
   }
   console.log('Master catalogs expanded and seeded');
+
+  // 3.1 Commission Rules (Doc 25)
+  const ruleRepo = dataSource.getRepository(CommissionRule);
+  for (const ruleData of COMMISSION_RULES_DATA) {
+    let rule = await ruleRepo.findOneBy({ ruleCode: ruleData.ruleCode });
+    if (!rule) {
+      await ruleRepo.save(ruleData as any);
+    }
+  }
+  console.log('Commission rules seeded');
 
   // 4. Store
   const storeRepo = dataSource.getRepository(Store);
@@ -137,7 +163,6 @@ async function seed() {
     if (!service) {
       service = await serviceRepo.save(serviceData as any);
     } else {
-      // Update existing service with new fields
       Object.assign(service, serviceData);
       service = await serviceRepo.save(service);
     }
@@ -145,175 +170,137 @@ async function seed() {
   }
   console.log('Services expanded and seeded');
 
-  // 6. End-to-end marketplace demo data
+  // 6. Marketplace Demo Cycle
   const quotationRepo = dataSource.getRepository(Quotation);
   const orderRepo = dataSource.getRepository(Order);
   const paymentRepo = dataSource.getRepository(Payment);
-  const documentRepo = dataSource.getRepository(Document);
-  const reviewRepo = dataSource.getRepository(Review);
-  const commissionRepo = dataSource.getRepository(Commission);
   const client = userEntities['client@tos.com'];
-  const admin = userEntities['admin@tos.com'];
-  const inspector = userEntities['inspector@tos.com'];
 
-  const ensureQuotation = async (serviceCode: string, status: string, price?: number, responseNotes?: string): Promise<Quotation> => {
+  const ensureQuotation = async (serviceCode: string, status: string, code: string, price?: number): Promise<Quotation> => {
     let quotation = await quotationRepo.findOne({
-      where: { client: { id: client.id }, service: { id: serviceEntities[serviceCode].id } },
-      relations: ['client', 'store', 'service'],
+      where: { quotationCode: code },
+      relations: ['client', 'store', 'service', 'currency', 'service.category'],
     });
     if (!quotation) {
+      const subtotal = price || 0;
+      const tax = subtotal * 0.16;
+      const comm = subtotal * 0.10; // Simplified for seed
+      
       quotation = quotationRepo.create({
+        quotationCode: code,
         client,
         store: store!,
         service: serviceEntities[serviceCode],
-        notes: `Demo ${serviceCode}: 2 contenedores 40HC, retiro estimado esta semana`,
+        quantity: 1,
+        unitMeasure: catalogItemEntities['SERVICE']!,
+        subtotalAmount: subtotal,
+        taxAmount: tax,
+        commissionAmount: comm,
+        totalAmount: subtotal + tax,
+        currency: catalogItemEntities['USD']!,
+        notes: `Demo ${code}: Requerimiento de servicio logístico.`,
         status,
-        price,
-        responseNotes,
-        respondedAt: price ? new Date() : null as any,
+        respondedAt: price ? new Date() : undefined,
       });
-      quotation = await quotationRepo.save(quotation) as any;
+      quotation = await quotationRepo.save(quotation);
     }
     return quotation!;
   };
 
-  await ensureQuotation('SER-INS-001', 'pending');
-  await ensureQuotation('SER-ALM-001', 'responded', 320, 'Incluye 7 días de almacenaje fiscal y control de inventario.');
-  const approvedQuotation = await ensureQuotation('SER-TRA-001', 'order_created', 350, 'Unidad disponible con chofer certificado.');
-  const completedQuotation = await ensureQuotation('SER-ADU-001', 'order_created', 450, 'Despacho aduanero integral con revisión documental.');
+  const approvedQuotation = await ensureQuotation('SER-TRA-001', 'CONVERTED', 'COT-2026-0003', 350);
+  const completedQuotation = await ensureQuotation('SER-ADU-001', 'CONVERTED', 'COT-2026-0004', 450);
 
-  const ensureOrder = async (quotation: Quotation, status: string): Promise<Order> => {
-    let order = await orderRepo.findOne({ where: { quotation: { id: quotation.id } }, relations: ['client', 'store', 'service', 'quotation'] });
+  const ensureOrder = async (quotation: Quotation, opStatus: string, code: string): Promise<Order> => {
+    let order = await orderRepo.findOne({ where: { orderCode: code }, relations: ['client', 'store', 'service', 'service.category', 'quotation', 'currency'] });
     if (!order) {
-      order = await orderRepo.save(orderRepo.create({
+      order = orderRepo.create({
+        orderCode: code,
         quotation,
         client,
         store: store!,
         service: quotation.service,
-        finalPrice: quotation.price,
-        status,
-        completedAt: status === 'completed' ? new Date() : null as any,
-      })) as any;
+        subtotalAmount: quotation.subtotalAmount,
+        taxAmount: quotation.taxAmount,
+        commissionAmount: quotation.commissionAmount,
+        totalAmount: quotation.totalAmount,
+        providerNetAmount: (quotation.subtotalAmount || 0) - (quotation.commissionAmount || 0),
+        currency: quotation.currency,
+        operationalStatus: opStatus,
+        financialStatus: opStatus === 'CLOSED' ? 'CONFIRMED' : 'UNPAID',
+        documentStatus: opStatus === 'CLOSED' ? 'VALIDATED' : 'PENDING',
+        startedAt: new Date(),
+        closedAt: opStatus === 'CLOSED' ? new Date() : undefined,
+      });
+      order = await orderRepo.save(order);
     }
     return order!;
   };
 
-  const activeOrder = await ensureOrder(approvedQuotation, 'pending');
-  const completedOrder = await ensureOrder(completedQuotation, 'completed');
+  const activeOrder = await ensureOrder(approvedQuotation, 'EXECUTING', 'ORD-2026-0001');
+  const completedOrder = await ensureOrder(completedQuotation, 'CLOSED', 'ORD-2026-0002');
 
-  const ensurePayment = async (order: Order, status: string, reference: string): Promise<Payment> => {
-    let payment = await paymentRepo.findOne({ where: { reference }, relations: ['order', 'client'] });
+  const ensurePayment = async (order: Order, status: string, reference: string, code: string): Promise<Payment> => {
+    let payment = await paymentRepo.findOne({ where: { paymentCode: code }, relations: ['order', 'client'] });
     if (!payment) {
       payment = await paymentRepo.save(paymentRepo.create({
+        paymentCode: code,
         order,
         client,
-        amount: order.finalPrice,
+        amount: order.totalAmount,
         currency: 'USD',
-        paymentMethod: 'bank_transfer',
-        reference,
+        paymentMethod: 'BANK_TRANSFER',
+        paymentReference: reference,
         receiptUrl: `https://demo.local/receipts/${reference}.pdf`,
         status,
-        confirmedAt: status === 'confirmed' ? new Date() : null as any,
+        confirmedAt: status === 'CONFIRMED' ? new Date() : undefined,
       })) as any;
     }
     return payment!;
   };
 
-  await ensurePayment(activeOrder, 'pending', 'DEMO-PAY-PENDING-001');
-  await ensurePayment(completedOrder, 'confirmed', 'DEMO-PAY-CONFIRMED-001');
+  await ensurePayment(activeOrder, 'SUBMITTED', 'REF-PAY-001', 'PAY-2026-00001');
+  await ensurePayment(completedOrder, 'CONFIRMED', 'REF-PAY-002', 'PAY-2026-00002');
 
-  const ensureDocument = async (order: Order, type: string, name: string, status: string): Promise<Document> => {
-    let document = await documentRepo.findOne({ where: { order: { id: order.id }, type }, relations: ['order'] });
-    if (!document) {
-      document = await documentRepo.save(documentRepo.create({
-        order,
-        uploadedBy: client,
-        type,
-        name,
-        url: `https://demo.local/documents/${order.id}-${type}.pdf`,
-        status,
-      })) as any;
-    }
-    return document!;
-  };
-
-  await ensureDocument(activeOrder, 'factura', 'Factura proforma transporte', 'pending');
-  await ensureDocument(completedOrder, 'bl', 'BL validado despacho aduanero', 'approved');
-
-  let review = await reviewRepo.findOne({ where: { order: { id: completedOrder.id }, user: { id: client.id } } });
-  if (!review) {
-    review = await reviewRepo.save(reviewRepo.create({
-      rating: 5,
-      comment: 'Servicio demo completado: despacho rápido y documentación clara.',
-      user: client,
-      store: store!,
-      order: completedOrder,
-    })) as any;
-  }
-  store!.averageRating = 4.9;
-  store!.reviewCount = Math.max(Number(store!.reviewCount || 0), 16);
-  await storeRepo.save(store!);
-
-  for (const order of [activeOrder, completedOrder]) {
-    let commission = await commissionRepo.findOne({ where: { order: { id: order.id } } });
-    if (!commission) {
-      commission = await commissionRepo.save(commissionRepo.create({
-        order,
-        store: store!,
-        rate: 10,
-        amount: Number(order.finalPrice) * 0.1,
-        status: order.status === 'completed' ? 'earned' : 'pending',
-      })) as any;
-    }
-  }
   console.log('Marketplace cycle demo seeded');
 
-  // 7. Operational modules demo data
-  const yardRepo = dataSource.getRepository(Yard);
-  const containerRepo = dataSource.getRepository(Container);
+  // 7. Operational Modules (Docs 21-22)
   const warehouseRepo = dataSource.getRepository(Warehouse);
   const locationRepo = dataSource.getRepository(StorageLocation);
   const inventoryItemRepo = dataSource.getRepository(InventoryItem);
   const vehicleRepo = dataSource.getRepository(Vehicle);
   const driverRepo = dataSource.getRepository(Driver);
   const tripRepo = dataSource.getRepository(Trip);
-  const inspectionRepo = dataSource.getRepository(Inspection);
-  const inspectionResultRepo = dataSource.getRepository(InspectionResult);
 
-  let warehouse = await warehouseRepo.findOneBy({ code: 'WH-PC-01' });
+  let warehouse = await warehouseRepo.findOneBy({ warehouseCode: 'WH-PC-01' });
   if (!warehouse) {
     warehouse = await warehouseRepo.save({ 
-      name: 'Almacén Fiscal Puerto Cabello', 
-      code: 'WH-PC-01', 
+      warehouseName: 'Almacén Fiscal Puerto Cabello', 
+      warehouseCode: 'WH-PC-01', 
       address: 'Zona portuaria, Puerto Cabello', 
-      status: 'active',
-      type: catalogItemEntities['BONDED']
+      status: 'ACTIVE',
+      warehouseType: 'BONDED',
+      store: store!
     } as any);
   }
 
-  let yard = await yardRepo.findOneBy({ code: 'YARD-PC-A' });
-  if (!yard) yard = await yardRepo.save({ name: 'Patio Puerto Cabello A', code: 'YARD-PC-A', capacity: 500, status: 'active' } as any);
-
-  let container = await containerRepo.findOneBy({ containerNumber: 'TOSU1234567' });
-  if (!container) {
-    container = await containerRepo.save({ 
-      containerNumber: 'TOSU1234567', 
-      type: catalogItemEntities['40HC'], 
-      loadStatus: catalogItemEntities['FULL'], 
-      yard, 
-      locationInYard: 'A-01-03', 
-      status: catalogItemEntities['AVAILABLE'] 
+  let location = await locationRepo.findOne({ where: { warehouse: { id: warehouse!.id }, locationCode: 'WH-PC-01-A-01-01' } });
+  if (!location) {
+    location = await locationRepo.save({ 
+      warehouse, 
+      locationCode: 'WH-PC-01-A-01-01', 
+      zone: 'A', 
+      aisle: '01', 
+      rack: '01', 
+      position: '01', 
+      status: 'EMPTY' 
     } as any);
   }
-
-  let location = await locationRepo.findOne({ where: { warehouse: { id: warehouse!.id }, aisle: 'A', shelf: '01', level: '02' } });
-  if (!location) location = await locationRepo.save({ warehouse, aisle: 'A', shelf: '01', level: '02', status: 'partial' } as any);
 
   let item = await inventoryItemRepo.findOneBy({ sku: 'DEMO-CARGO-001' });
   if (!item) {
     item = await inventoryItemRepo.save({ 
       sku: 'DEMO-CARGO-001', 
-      description: 'Carga demo asociada a orden completada', 
+      description: 'Carga demo de prueba', 
       quantity: 12, 
       unit: catalogItemEntities['TON'], 
       warehouse, 
@@ -322,35 +309,47 @@ async function seed() {
     } as any);
   }
 
-  let vehicle = await vehicleRepo.findOneBy({ plate: 'DEMO-01' });
-  if (!vehicle) vehicle = await vehicleRepo.save({ plate: 'DEMO-01', model: 'Freightliner Cascadia', type: 'Truck', status: 'active' } as any);
+  let vehicle = await vehicleRepo.findOneBy({ vehicleCode: 'VEH-001' });
+  if (!vehicle) {
+    vehicle = await vehicleRepo.save({ 
+      vehicleCode: 'VEH-001', 
+      vehicleType: 'TRUCK', 
+      plateNumber: 'DEMO-999', 
+      store: store!,
+      status: 'ACTIVE' 
+    } as any);
+  }
 
-  let driver = await driverRepo.findOneBy({ licenseNumber: 'LIC-DEMO-001' });
-  if (!driver) driver = await driverRepo.save({ fullName: 'Miguel Torres', licenseNumber: 'LIC-DEMO-001', phone: '+58 412-0000001', status: 'active' } as any);
+  let driver = await driverRepo.findOneBy({ driverCode: 'DRV-001' });
+  if (!driver) {
+    driver = await driverRepo.save({ 
+      driverCode: 'DRV-001', 
+      firstName: 'Miguel', 
+      lastName: 'Torres', 
+      phone: '+58 412-1112233', 
+      store: store!,
+      status: 'ACTIVE' 
+    } as any);
+  }
 
   let trip = await tripRepo.findOne({ where: { order: { id: activeOrder.id } } });
   if (!trip) {
-    trip = await tripRepo.save({ origin: 'Puerto Cabello', destination: 'Valencia - Zona Industrial', vehicle, driver, order: activeOrder, status: 'scheduled' } as any);
-  }
-
-  let inspection = await inspectionRepo.findOne({ where: { order: { id: completedOrder.id }, inspectionType: 'Documental' } });
-  if (!inspection) {
-    inspection = await inspectionRepo.save({ inspectionType: 'Documental', order: completedOrder, inspector, status: 'completed', scheduledAt: new Date() } as any);
-  }
-
-  let inspectionResult = await inspectionResultRepo.findOne({ where: { inspection: { id: inspection!.id } } });
-  if (!inspectionResult) {
-    inspectionResult = await inspectionResultRepo.save({
-      inspection,
-      findings: 'Documentos completos y consistentes para despacho demo.',
-      verdict: 'approved',
-      checklist: { bl: true, invoice: true, customsForm: true },
+    trip = await tripRepo.save({ 
+      tripCode: 'TRP-2026-0001',
+      order: activeOrder,
+      carrier: store!,
+      vehicle,
+      driver,
+      tripType: 'STANDARD',
+      originName: 'PORT-PC',
+      originAddress: 'Puerto Cabello Terminal',
+      destinationName: 'WH-PC-01',
+      destinationAddress: 'Zona Industrial Valencia',
+      status: 'ASSIGNED' 
     } as any);
   }
-  console.log('Operational demo seeded');
 
-  console.log('Demo users: admin@tos.com, client@tos.com, store@tos.com, inspector@tos.com / password123');
-
+  console.log('Operational demo seeded (Trips, Warehouses, Vehicles)');
   console.log('Seed completed successfully');
   await dataSource.destroy();
 }

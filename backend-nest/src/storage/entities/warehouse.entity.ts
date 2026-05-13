@@ -1,25 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { MasterCatalogItem } from '../../catalogs/entities/master-catalog-item.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Store } from '../../stores/entities/store.entity';
 
 @Entity('warehouses')
 export class Warehouse {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  name: string;
+  @Column({ unique: true })
+  warehouseCode: string;
 
   @Column()
-  code: string;
+  warehouseName: string;
 
-  @ManyToOne(() => MasterCatalogItem)
-  @JoinColumn({ name: 'type_id' })
-  type: MasterCatalogItem;
+  @ManyToOne(() => Store)
+  store: Store;
 
-  @Column({ nullable: true })
+  @Column()
+  warehouseType: string; // BONDED, GENERAL, REEFER
+
+  @Column()
   address: string;
 
-  @Column({ default: 'active' })
+  @Column({ nullable: true })
+  capacityUnits: number;
+
+  @Column({ default: 'ACTIVE' })
   status: string;
 
   @CreateDateColumn()

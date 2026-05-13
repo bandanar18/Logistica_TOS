@@ -14,14 +14,19 @@ const transport_controller_1 = require("./transport.controller");
 const vehicle_entity_1 = require("./entities/vehicle.entity");
 const driver_entity_1 = require("./entities/driver.entity");
 const trip_entity_1 = require("./entities/trip.entity");
+const orders_module_1 = require("../orders/orders.module");
 let TransportModule = class TransportModule {
 };
 exports.TransportModule = TransportModule;
 exports.TransportModule = TransportModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([vehicle_entity_1.Vehicle, driver_entity_1.Driver, trip_entity_1.Trip])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([vehicle_entity_1.Vehicle, driver_entity_1.Driver, trip_entity_1.Trip]),
+            (0, common_1.forwardRef)(() => orders_module_1.OrdersModule),
+        ],
         controllers: [transport_controller_1.TransportController],
         providers: [transport_service_1.TransportService],
+        exports: [transport_service_1.TransportService],
     })
 ], TransportModule);
 //# sourceMappingURL=transport.module.js.map

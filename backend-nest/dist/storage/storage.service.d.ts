@@ -11,7 +11,11 @@ export declare class StorageService {
     private auditService;
     constructor(warehouseRepo: Repository<Warehouse>, locationRepo: Repository<StorageLocation>, itemRepo: Repository<InventoryItem>, auditService: AuditService);
     findAllItems(): Promise<InventoryItem[]>;
+    generateWarehouseCode(): Promise<string>;
+    createWarehouse(data: any, user: User): Promise<Warehouse>;
+    generateLocationCode(warehouseId: number, zone: string, aisle: string): Promise<string>;
     receiveItem(data: any, user: User): Promise<InventoryItem>;
     moveItem(id: number, toLocationId: number, user: User): Promise<InventoryItem>;
     findAllWarehouses(): Promise<Warehouse[]>;
+    findAllLocations(warehouseId: number): Promise<StorageLocation[]>;
 }

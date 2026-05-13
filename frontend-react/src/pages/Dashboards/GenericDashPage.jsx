@@ -8,50 +8,63 @@ const STATUS_MAP = {
   pending: { label: 'Pendiente', badge: 'badge-warning' },
   confirmed: { label: 'Confirmado', badge: 'badge-success' },
   rejected: { label: 'Rechazado', badge: 'badge-danger' },
-  // Quotations
-  responded: { label: 'Respondida', badge: 'badge-info' },
-  approved: { label: 'Aprobada', badge: 'badge-success' },
-  order_created: { label: 'En Orden', badge: 'badge-muted' },
-  // Orders
-  in_progress: { label: 'En Proceso', badge: 'badge-info' },
-  completed: { label: 'Completada', badge: 'badge-success' },
-  cancelled: { label: 'Cancelada', badge: 'badge-danger' },
-  // TOS / Storage
+  // Quotations (Refactor to uppercase as per Doc 18)
+  REQUESTED: { label: 'Solicitada', badge: 'badge-info' },
+  IN_REVIEW: { label: 'En revisión', badge: 'badge-warning' },
+  RESPONDED: { label: 'Respondida', badge: 'badge-info' },
+  APPROVED: { label: 'Aprobada', badge: 'badge-success' },
+  REJECTED: { label: 'Rechazada', badge: 'badge-danger' },
+  EXPIRED: { label: 'Expirada', badge: 'badge-muted' },
+  CONVERTED: { label: 'En Orden', badge: 'badge-muted' },
+  CANCELLED: { label: 'Cancelada', badge: 'badge-danger' },
+  // Orders Operational (Doc 19)
+  CREATED: { label: 'Creada', badge: 'badge-info' },
+  IN_PROCESS: { label: 'En proceso', badge: 'badge-info' },
+  PENDING_DOCUMENTS: { label: 'Pendiente documentos', badge: 'badge-warning' },
+  PENDING_PAYMENT: { label: 'Pendiente pago', badge: 'badge-warning' },
+  EXECUTING: { label: 'En ejecución', badge: 'badge-warning' },
+  ON_HOLD: { label: 'En espera', badge: 'badge-danger' },
+  CLOSED: { label: 'Cerrada', badge: 'badge-success' },
+  // Financial Statuses
+  UNPAID: { label: 'No pagado', badge: 'badge-danger' },
+  SUBMITTED: { label: 'Enviado', badge: 'badge-info' },
+  CONFIRMED: { label: 'Confirmado', badge: 'badge-success' },
+  // Document Statuses
+  VALIDATED: { label: 'Validado', badge: 'badge-success' },
+  // Legacy or Common lowercase
   available: { label: 'Disponible', badge: 'badge-success' },
   blocked: { label: 'Bloqueado', badge: 'badge-danger' },
   departed: { label: 'Despachado', badge: 'badge-muted' },
   full: { label: 'Lleno', badge: 'badge-warning' },
   empty: { label: 'Vacío', badge: 'badge-muted' },
-  // Transport / Inspections
   scheduled: { label: 'Programado', badge: 'badge-info' },
-  in_transit: { label: 'En Tránsito', badge: 'badge-warning' },
-  with_observations: { label: 'Con Observaciones', badge: 'badge-warning' },
 };
 
 const MODULE_CONFIG = {
   quotations: {
     title: 'Cotizaciones',
     endpoint: 'quotations',
-    cols: ['ID', 'Servicio', 'Tienda/Cliente', 'Estado', 'Monto', 'Fecha'],
+    cols: ['Código', 'Servicio', 'Cliente/Tienda', 'Estado', 'Total', 'Fecha'],
     mapRow: (q, role) => [
-      `COT-${q.id.toString().padStart(4, '0')}`,
+      q.quotationCode || `COT-${q.id.toString().padStart(4, '0')}`,
       q.service?.name,
-      role === 'client' ? q.store?.legalName : q.client?.name,
+      role === 'client' ? q.store?.legalName : (q.client?.name || q.client?.firstName),
       q.status,
-      q.price ? `USD ${q.price}` : '—',
+      q.totalAmount ? `USD ${q.totalAmount}` : '—',
       new Date(q.createdAt).toLocaleDateString()
     ],
   },
   orders: {
     title: 'Órdenes',
     endpoint: 'orders',
-    cols: ['ID', 'Servicio', 'Tienda/Cliente', 'Estado', 'Monto', 'Fecha'],
+    cols: ['Código', 'Servicio', 'Estado Op.', 'Pago', 'Docts.', 'Total', 'Fecha'],
     mapRow: (o, role) => [
-      `ORD-${o.id.toString().padStart(4, '0')}`,
+      o.orderCode || `ORD-${o.id.toString().padStart(4, '0')}`,
       o.service?.name,
-      role === 'client' ? o.store?.legalName : o.client?.name,
-      o.status,
-      o.finalPrice ? `USD ${o.finalPrice}` : '—',
+      o.operationalStatus,
+      o.financialStatus,
+      o.documentStatus,
+      o.totalAmount ? `USD ${o.totalAmount}` : '—',
       new Date(o.createdAt).toLocaleDateString()
     ],
   },
@@ -61,7 +74,7 @@ const MODULE_CONFIG = {
     cols: ['ID', 'Orden', 'Método', 'Estado', 'Monto', 'Fecha'],
     mapRow: (p) => [
       `PAY-${p.id.toString().padStart(4, '0')}`,
-      `ORD-${p.order?.id?.toString().padStart(4, '0')}`,
+      p.order?.orderCode || `ORD-${p.order?.id?.toString().padStart(4, '0')}`,
       p.paymentMethod,
       p.status,
       `USD ${p.amount}`,
@@ -384,56 +397,43 @@ export default function GenericDashPage({ title, role, module }) {
         return;
       }
       if (module === 'quotations' && label === 'Aprobar') {
-        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
+        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'APPROVED' }) });
         await request(`quotations/${item.id}/convert-to-order`, { method: 'POST' });
       }
       if (module === 'quotations' && label === 'Rechazar') {
-        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) });
+        await request(`quotations/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'REJECTED' }) });
       }
-      if (module === 'orders' && label === 'Reseñar') {
-        setModal({ action: label, item });
-        return;
+      if (module === 'orders' && label === 'Iniciar') {
+        await request(`orders/${item.id}/start`, { method: 'PATCH' });
       }
-      if (module === 'orders') {
-        const status = label === 'Iniciar' ? 'in_progress' : label === 'Completar' ? 'completed' : 'cancelled';
-        await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+      if (module === 'orders' && label === 'Ejecutar') {
+        await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'EXECUTING' }) });
+      }
+      if (module === 'orders' && label === 'Cerrar') {
+        await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'CLOSED' }) });
+      }
+      if (module === 'orders' && label === 'Cancelar') {
+        await request(`orders/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'CANCELLED' }) });
       }
       if (module === 'payments' && label === 'Confirmar') {
         await request(`payments/${item.id}/confirm`, { method: 'PATCH' });
       }
-      if (module === 'payments' && label === 'Rechazar') {
-        setModal({ action: 'RechazarPago', item });
-        return;
-      }
-      if (module === 'documents' && label === 'Validar') {
-        await request(`documents/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
-      }
-      if (module === 'users') {
-        await request(`users/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive: !item.isActive }) });
-      }
-      if (module === 'commissions') {
-        const status = label === 'Liquidar' ? 'settled' : 'withheld';
-        await request(`commissions/${item.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
-      }
       await refresh();
     } catch (err) {
       console.error(err);
-      alert('No se pudo ejecutar la acción. Revisa permisos y estado del registro.');
+      alert('No se pudo ejecutar la acción.');
     } finally {
       setProcessingKey(null);
     }
   };
 
   const getActions = (item) => {
-    if (module === 'quotations' && role === 'store' && item.status === 'pending') return ['Responder'];
-    if (module === 'quotations' && role === 'client' && item.status === 'responded') return ['Aprobar', 'Rechazar'];
-    if (module === 'orders' && role === 'store' && item.status === 'pending') return ['Iniciar', 'Cancelar'];
-    if (module === 'orders' && role === 'store' && item.status === 'in_progress') return ['Completar'];
-    if (module === 'orders' && role === 'client' && item.status === 'completed') return ['Reseñar'];
+    if (module === 'quotations' && role === 'store' && item.status === 'REQUESTED') return ['Responder'];
+    if (module === 'quotations' && role === 'client' && item.status === 'RESPONDED') return ['Aprobar', 'Rechazar'];
+    if (module === 'orders' && role === 'store' && item.operationalStatus === 'CREATED') return ['Iniciar', 'Cancelar'];
+    if (module === 'orders' && role === 'store' && item.operationalStatus === 'IN_PROCESS') return ['Ejecutar'];
+    if (module === 'orders' && role === 'store' && item.operationalStatus === 'EXECUTING') return ['Cerrar'];
     if (module === 'payments' && role === 'admin' && item.status === 'pending') return ['Confirmar', 'Rechazar'];
-    if (module === 'documents' && role === 'admin' && item.status === 'pending') return ['Validar'];
-    if (module === 'users' && role === 'admin') return [item.isActive ? 'Desactivar' : 'Activar'];
-    if (module === 'commissions' && role === 'admin' && ['pending', 'earned'].includes(item.status)) return ['Liquidar', 'Retener'];
     return [];
   };
 

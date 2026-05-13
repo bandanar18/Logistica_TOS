@@ -14,11 +14,15 @@ const typeorm_1 = require("typeorm");
 const warehouse_entity_1 = require("./warehouse.entity");
 let StorageLocation = class StorageLocation {
     id;
+    locationCode;
     warehouse;
+    zone;
     aisle;
-    shelf;
-    level;
+    rack;
+    position;
     status;
+    createdAt;
+    updatedAt;
 };
 exports.StorageLocation = StorageLocation;
 __decorate([
@@ -26,26 +30,41 @@ __decorate([
     __metadata("design:type", Number)
 ], StorageLocation.prototype, "id", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", String)
+], StorageLocation.prototype, "locationCode", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => warehouse_entity_1.Warehouse),
-    (0, typeorm_1.JoinColumn)({ name: 'warehouse_id' }),
     __metadata("design:type", warehouse_entity_1.Warehouse)
 ], StorageLocation.prototype, "warehouse", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], StorageLocation.prototype, "zone", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], StorageLocation.prototype, "aisle", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], StorageLocation.prototype, "shelf", void 0);
+], StorageLocation.prototype, "rack", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], StorageLocation.prototype, "level", void 0);
+], StorageLocation.prototype, "position", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'empty' }),
+    (0, typeorm_1.Column)({ default: 'EMPTY' }),
     __metadata("design:type", String)
 ], StorageLocation.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], StorageLocation.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", Date)
+], StorageLocation.prototype, "updatedAt", void 0);
 exports.StorageLocation = StorageLocation = __decorate([
     (0, typeorm_1.Entity)('storage_locations')
 ], StorageLocation);

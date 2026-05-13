@@ -11,6 +11,8 @@ import ClientDashboard from './pages/Dashboards/Client/ClientDashboard';
 import StoreDashboard from './pages/Dashboards/Store/StoreDashboard';
 import StoreProfileSettings from './pages/Dashboards/Store/StoreProfileSettings';
 import StoreServicesPage from './pages/Dashboards/Store/StoreServicesPage';
+import TripsPage from './pages/Dashboards/Store/TripsPage';
+import InventoryPage from './pages/Dashboards/Store/InventoryPage';
 import AdminDashboard from './pages/Dashboards/Admin/AdminDashboard';
 
 // Generic dashboard pages (placeholder)
@@ -93,10 +95,10 @@ function AppRoutes() {
         <ProtectedRoute requiredRole="store"><GenericDashPage title="TOS (Patios)" role="store" module="tos" /></ProtectedRoute>
       } />
       <Route path="/dashboard/store/storage" element={
-        <ProtectedRoute requiredRole="store"><GenericDashPage title="Almacenamiento" role="store" module="storage" /></ProtectedRoute>
+        <ProtectedRoute requiredRole="store"><InventoryPage /></ProtectedRoute>
       } />
       <Route path="/dashboard/store/transport" element={
-        <ProtectedRoute requiredRole="store"><GenericDashPage title="Transporte" role="store" module="transport" /></ProtectedRoute>
+        <ProtectedRoute requiredRole="store"><TripsPage /></ProtectedRoute>
       } />
       <Route path="/dashboard/store/inspections" element={
         <ProtectedRoute requiredRole="store"><GenericDashPage title="Inspecciones" role="store" module="inspections" /></ProtectedRoute>
