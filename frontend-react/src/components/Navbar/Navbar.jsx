@@ -1,8 +1,8 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  Search, Menu, X, Anchor, LogOut, User, LayoutDashboard, Bell,
-  ChevronDown
+  Menu, X, Anchor, LogOut, User, LayoutDashboard,
+  ChevronDown, Globe
 } from 'lucide-react';
 import { useState } from 'react';
 import './Navbar.css';
@@ -33,15 +33,14 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" className="navbar-logo">
           <div className="navbar-logo-icon">
-            <Anchor size={20} />
+            <Anchor size={30} strokeWidth={2.5} />
           </div>
           <div className="navbar-logo-text">
-            <span className="navbar-logo-name">TOS Market</span>
-            <span className="navbar-logo-sub">Logística Portuaria</span>
+            <span className="navbar-logo-name">Puerto</span>
           </div>
         </Link>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav Links (Centered) */}
         <div className="navbar-links">
           <Link to="/search" className={`nav-link ${location.pathname === '/search' ? 'active' : ''}`}>
             Servicios
@@ -53,77 +52,72 @@ export default function Navbar() {
 
         {/* Right Side */}
         <div className="navbar-right">
-          {user ? (
-            <>
-              <Link to={getDashboardPath()} className="btn btn-ghost btn-sm">
-                <LayoutDashboard size={16} />
-                Dashboard
-              </Link>
-              <button className="navbar-notif-btn">
-                <Bell size={18} />
-                <span className="notif-dot" />
-              </button>
-              <div className="navbar-user-menu">
-                <button
-                  className="navbar-user-btn"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                >
-                  <div className="avatar" style={{ background: user.role === 'admin' ? '#C62828' : user.role === 'store' ? '#2E7D32' : '#1A3C5E' }}>
-                    {user.avatar || (user.firstName ? user.firstName.charAt(0) : 'U')}
-                  </div>
-                  <span className="navbar-user-name">{(user.name || user.firstName || 'Usuario').split(' ')[0]}</span>
-                  <ChevronDown size={14} />
-                </button>
-                {userMenuOpen && (
-                  <div className="user-dropdown">
+          {!user && (
+            <Link to="/dashboard/store" className="btn btn-ghost">
+              Hazte tienda
+            </Link>
+          )}
+          
+          <button className="btn btn-ghost p-2 rounded-full">
+            <Globe size={18} />
+          </button>
+
+          <div className="navbar-user-menu">
+            <button
+              className="navbar-user-btn"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+            >
+              <Menu size={16} />
+              <div className="avatar" style={{ 
+                background: 'var(--color-slate)', 
+                width: '32px', 
+                height: '32px',
+                fontSize: '12px'
+              }}>
+                {user ? (user.firstName ? user.firstName.charAt(0) : 'U') : <User size={16} />}
+              </div>
+            </button>
+            
+            {userMenuOpen && (
+              <div className="user-dropdown">
+                {user ? (
+                  <>
                     <div className="user-dropdown-header">
-                      <p className="font-semibold">{user.name || `${user.firstName} ${user.lastName}`}</p>
+                      <p className="font-bold">{user.name || `${user.firstName} ${user.lastName}`}</p>
                       <p className="text-sm text-muted">{user.email}</p>
                     </div>
                     <div className="user-dropdown-divider" />
                     <Link to={getDashboardPath()} className="user-dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                      <LayoutDashboard size={15} /> Mi Panel
+                      <LayoutDashboard size={16} /> Mi Panel
                     </Link>
                     <Link to="/profile" className="user-dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                      <User size={15} /> Mi Perfil
+                      <User size={16} /> Mi Perfil
                     </Link>
                     <div className="user-dropdown-divider" />
                     <button className="user-dropdown-item danger" onClick={handleLogout}>
-                      <LogOut size={15} /> Cerrar sesión
+                      <LogOut size={16} /> Cerrar sesión
                     </button>
-                  </div>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/register" className="user-dropdown-item font-bold" onClick={() => setUserMenuOpen(false)}>Regístrate</Link>
+                    <Link to="/login" className="user-dropdown-item" onClick={() => setUserMenuOpen(false)}>Inicia sesión</Link>
+                    <div className="user-dropdown-divider" />
+                    <Link to="/dashboard/store" className="user-dropdown-item" onClick={() => setUserMenuOpen(false)}>Hazte tienda</Link>
+                    <Link to="/help" className="user-dropdown-item" onClick={() => setUserMenuOpen(false)}>Centro de ayuda</Link>
+                  </>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-ghost btn-sm">Iniciar sesión</Link>
-              <Link to="/register" className="btn btn-primary btn-sm">Registrarse</Link>
-            </>
-          )}
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <button className="navbar-mobile-btn" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="navbar-mobile-menu">
-          <Link to="/search" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Servicios</Link>
-          <Link to="/search?cat=Aduana" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Aduana</Link>
-          <Link to="/search?cat=Transporte" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Transporte</Link>
-          <Link to="/search?cat=Inspección" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Inspección</Link>
-          {!user && (
-            <div className="mobile-nav-actions">
-              <Link to="/login" className="btn btn-secondary" onClick={() => setMobileOpen(false)}>Iniciar sesión</Link>
-              <Link to="/register" className="btn btn-primary" onClick={() => setMobileOpen(false)}>Registrarse</Link>
-            </div>
-          )}
-        </div>
-      )}
     </nav>
   );
 }
+

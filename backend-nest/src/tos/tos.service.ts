@@ -33,7 +33,7 @@ export class TosService {
       action: 'tos.container.created',
       entityType: 'container',
       entityId: saved.id.toString(),
-      details: { containerNumber: saved.containerNumber }
+      metadata: { containerNumber: saved.containerNumber }
     });
     
     return saved;
@@ -71,7 +71,7 @@ export class TosService {
       action: 'tos.container.moved',
       entityType: 'container',
       entityId: id.toString(),
-      details: { fromYardId: fromYard?.id, toYardId, toLocation }
+      metadata: { fromYardId: fromYard?.id, toYardId, toLocation }
     });
 
     return updated;

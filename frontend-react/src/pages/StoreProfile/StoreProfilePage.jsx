@@ -7,6 +7,7 @@ import {
 import AppLayout from '../../layouts/AppLayout/AppLayout';
 import RequestQuoteModal from '../../components/RequestQuoteModal/RequestQuoteModal';
 import { StarRating } from '../../components/StoreResultCard/StoreResultCard';
+import API_BASE_URL from '../../config/api';
 import './StoreProfilePage.css';
 
 const MOCK_REVIEWS = [
@@ -29,14 +30,16 @@ export default function StoreProfilePage() {
     const fetchStoreData = async () => {
       setLoading(true);
       try {
-        const storeRes = await fetch(`http://localhost:3000/stores/public/${id}`);
+        const storeRes = await fetch(`${API_BASE_URL}/stores/public/${id}`);
         if (storeRes.ok) {
-          setStore(await storeRes.json());
+          const json = await storeRes.json();
+          setStore(json.data || json);
         }
 
-        const servicesRes = await fetch(`http://localhost:3000/services/search?storeId=${id}`);
+        const servicesRes = await fetch(`${API_BASE_URL}/search/services?storeId=${id}`);
         if (servicesRes.ok) {
-          setServices(await servicesRes.json());
+          const json = await servicesRes.json();
+          setServices(json.data || json || []);
         }
       } catch (err) {
         console.error(err);

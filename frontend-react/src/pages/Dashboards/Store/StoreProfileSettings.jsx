@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Save, MapPin, Building, Palette, Upload, ShieldCheck } from 'lucide-react';
 import DashboardLayout from '../../../layouts/DashboardLayout/DashboardLayout';
 import { useAuth } from '../../../context/AuthContext';
+import API_BASE_URL from '../../../config/api';
 import '../Client/ClientDashboard.css';
 
 export default function StoreProfileSettings() {
@@ -17,7 +18,7 @@ export default function StoreProfileSettings() {
   });
 
   useEffect(() => {
-    fetch('http://localhost:3000/stores/me', {
+    fetch(`${API_BASE_URL}/stores/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => {
@@ -43,7 +44,7 @@ export default function StoreProfileSettings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:3000/stores/me', {
+      const res = await fetch(`${API_BASE_URL}/stores/me`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

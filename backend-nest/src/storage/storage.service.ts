@@ -31,7 +31,7 @@ export class StorageService {
   async createWarehouse(data: any, user: User): Promise<Warehouse> {
     const warehouseCode = await this.generateWarehouseCode();
     const warehouse = this.warehouseRepo.create({ ...data, warehouseCode });
-    return this.warehouseRepo.save(warehouse);
+    return this.warehouseRepo.save(warehouse) as any;
   }
 
   async generateLocationCode(warehouseId: number, zone: string, aisle: string): Promise<string> {
@@ -50,7 +50,7 @@ export class StorageService {
       action: 'storage.item.received',
       entityType: 'inventory_item',
       entityId: saved.id.toString(),
-      details: { sku: saved.sku, quantity: saved.quantity }
+      metadata: { sku: saved.sku, quantity: saved.quantity }
     });
     
     return saved;
@@ -75,7 +75,7 @@ export class StorageService {
       action: 'storage.item.moved',
       entityType: 'inventory_item',
       entityId: id.toString(),
-      details: { fromLocationId: previousLocation?.id, toLocationId }
+      metadata: { fromLocationId: previousLocation?.id, toLocationId }
     });
 
     return updated;

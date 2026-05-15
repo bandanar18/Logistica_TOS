@@ -40,34 +40,42 @@ export class TransportService {
       action: 'trip.created',
       entityType: 'trip',
       entityId: saved.id.toString(),
-      details: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
+      metadata: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
     });
     
     return saved;
   }
 
   async updateTripStatus(id: number, status: string, user: User): Promise<Trip> {
-    const trip = await this.tripRepo.findOne({ where: { id } });
-    if (!trip) throw new NotFoundException('Trip not found');
+    try {
+      const trip = await this.tripRepo.findOne({ 
+        where: { id },
+        relations: ['vehicle', 'driver', 'order', 'carrier']
+      });
+      if (!trip) throw new NotFoundException(`Trip with ID ${id} not found`);
 
-    const oldStatus = trip.status;
-    trip.status = status;
-    
-    if (status === 'IN_TRANSIT') trip.actualPickupAt = new Date();
-    if (status === 'DELIVERED') trip.actualDeliveryAt = new Date();
+      const oldStatus = trip.status;
+      trip.status = status;
+      
+      if (status === 'IN_TRANSIT') trip.actualPickupAt = new Date();
+      if (status === 'DELIVERED') trip.actualDeliveryAt = new Date();
 
-    const updated = await this.tripRepo.save(trip) as any;
+      const updated = await this.tripRepo.save(trip);
 
-    await this.auditService.log({
-      user,
-      module: 'transport',
-      action: 'trip.status_changed',
-      entityType: 'trip',
-      entityId: id.toString(),
-      details: { oldStatus, newStatus: status }
-    });
+      await this.auditService.log({
+        user: { id: user.id } as any,
+        module: 'transport',
+        action: 'trip.status_changed',
+        entityType: 'trip',
+        entityId: id.toString(),
+        metadata: { oldStatus, newStatus: status }
+      }).catch(err => console.error('Audit log failed:', err));
 
-    return updated;
+      return updated;
+    } catch (error) {
+      console.error('Error updating trip status:', error);
+      throw error;
+    }
   }
 
   async findAllVehicles(): Promise<Vehicle[]> {

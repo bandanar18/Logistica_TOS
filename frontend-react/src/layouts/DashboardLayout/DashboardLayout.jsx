@@ -62,24 +62,41 @@ export default function DashboardLayout({ children, title }) {
 
   const getMenu = () => {
     if (!user) return [];
-    if (user.role === 'admin') return ADMIN_MENU;
-    if (user.role === 'store') return STORE_MENU;
+    const role = user.role?.name || user.role;
+    if (role === 'PROF-SUP-003') return ADMIN_MENU;
+    if (role === 'PROF-TIE-002') return STORE_MENU;
+    if (role === 'PROF-OPE-004') return ADMIN_MENU; // Operador uses admin-like menu for now
+    if (role === 'PROF-CLI-001') return CLIENT_MENU;
+    
+    // For other roles, use a basic menu or specific one if needed
     return CLIENT_MENU;
   };
 
   const getRoleLabel = () => {
     if (!user) return '';
-    if (user.role === 'admin') return 'Superadministrador';
-    if (user.role === 'store') return 'Tienda Logística';
-    return 'Cliente';
+    const role = user.role?.name || user.role;
+    const roleMap = {
+      'PROF-CLI-001': 'Cliente Final',
+      'PROF-TIE-002': 'Tienda Logística',
+      'PROF-SUP-003': 'Superadmin',
+      'PROF-OPE-004': 'Operador Interno',
+      'PROF-INS-005': 'Inspector',
+      'PROF-TRP-006': 'Transportista',
+      'PROF-AGA-007': 'Agente Aduanal',
+      'PROF-AUD-008': 'Auditor',
+    };
+    return roleMap[role] || 'Usuario';
   };
 
   const getRoleColor = () => {
-    if (!user) return '#1A3C5E';
-    if (user.role === 'admin') return '#C62828';
-    if (user.role === 'store') return '#2E7D32';
-    return '#1A3C5E';
+    if (!user) return 'var(--color-carbon)';
+    const role = user.role?.name || user.role;
+    if (role === 'PROF-SUP-003') return 'var(--color-rausch-coral)';
+    if (role === 'PROF-TIE-002') return '#2E7D32';
+    if (role === 'PROF-OPE-004') return 'var(--color-carbon)';
+    return 'var(--color-carbon)';
   };
+
 
   const handleLogout = () => {
     logout();

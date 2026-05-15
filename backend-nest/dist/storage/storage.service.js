@@ -57,7 +57,7 @@ let StorageService = class StorageService {
             action: 'storage.item.received',
             entityType: 'inventory_item',
             entityId: saved.id.toString(),
-            details: { sku: saved.sku, quantity: saved.quantity }
+            metadata: { sku: saved.sku, quantity: saved.quantity }
         });
         return saved;
     }
@@ -78,7 +78,7 @@ let StorageService = class StorageService {
             action: 'storage.item.moved',
             entityType: 'inventory_item',
             entityId: id.toString(),
-            details: { fromLocationId: previousLocation?.id, toLocationId }
+            metadata: { fromLocationId: previousLocation?.id, toLocationId }
         });
         return updated;
     }

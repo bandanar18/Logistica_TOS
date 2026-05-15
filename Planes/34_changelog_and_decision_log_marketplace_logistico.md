@@ -1605,7 +1605,82 @@ Reglas:
 
 ---
 
-# SECCIÓN I — CHECKLIST DE USO DEL DOCUMENTO
+# SECCIÓN I — HISTORIAL DE IMPLEMENTACIÓN
+
+---
+
+## 52. CHG-2026-012 — Implementación de Fase 1 y 2: Fundaciones y Marketplace Comercial
+
+| Campo | Valor |
+|---|---|
+| Código | CHG-2026-012 |
+| Fecha | 2026-05-13 |
+| Estado | IMPLEMENTED |
+| Tipo de cambio | FULL_STACK |
+| Prioridad | P0 |
+| Nivel de impacto | CRITICAL |
+| Nivel de riesgo | LOW |
+| Sprint relacionado | Sprint 01 - Sprint 08 |
+| Épica relacionada | EPIC-001 - EPIC-010 |
+| Módulos afectados | Auth, Users, Roles, Stores, Services, Search |
+| Documentos afectados | `11_TECHNICAL_ARCHITECTURE.md`, `12_DATABASE_MASTER_SCHEMA.md` |
+
+### Descripción del cambio
+Implementación completa de la infraestructura base, sistema de seguridad RBAC/Scopes y el marketplace comercial (Yelp-like).
+
+### Resultado final
+Sistema funcional con registro de usuarios, perfiles de tiendas, catálogo de servicios y buscador público.
+
+---
+
+## 53. CHG-2026-013 — Implementación de Fase 3 y 4: Órdenes, Pagos, Comisiones y Operaciones
+
+| Campo | Valor |
+|---|---|
+| Código | CHG-2026-013 |
+| Fecha | 2026-05-13 |
+| Estado | IMPLEMENTED |
+| Tipo de cambio | BACKEND / DATABASE |
+| Prioridad | P0 |
+| Nivel de impacto | CRITICAL |
+| Nivel de riesgo | MEDIUM |
+| Sprint relacionado | Sprint 09 - Sprint 17 |
+| Épica relacionada | EPIC-011 - EPIC-017 |
+| Módulos afectados | Orders, Payments, Commissions, TOS, Transport, Storage, Inspections |
+
+### Descripción del cambio
+Desarrollo de los flujos transaccionales y operativos. Incluye el workflow de cotización -> orden -> pago manual -> comisión.
+
+### Resultado final
+El sistema soporta el ciclo de vida completo de un servicio logístico, desde la preventa hasta la ejecución operativa.
+
+---
+
+## 54. CHG-2026-014 — Implementación de Fase 5: Auditoría de Alta Fidelidad y Reportes en Tiempo Real
+
+| Campo | Valor |
+|---|---|
+| Código | CHG-2026-014 |
+| Fecha | 2026-05-13 |
+| Estado | IMPLEMENTED |
+| Tipo de cambio | AUDIT / REPORTS |
+| Prioridad | P0 |
+| Nivel de impacto | HIGH |
+| Nivel de riesgo | LOW |
+| Sprint relacionado | Sprint 18 - Sprint 19 |
+| Épica relacionada | EPIC-018 - EPIC-019 |
+| Módulos afectados | Audit, Reports, Dashboards |
+
+### Descripción del cambio
+Refactorización del sistema de auditoría para capturar diferenciales de estado (old/new values) y creación del motor de reportes para KPIs financieros y operativos.
+
+### Resultado final
+Dashboards administrativos y de tienda sincronizados con datos reales, proporcionando visibilidad total de la operación.
+
+---
+
+# SECCIÓN J — CHECKLIST DE USO DEL DOCUMENTO
+
 
 ---
 

@@ -31,7 +31,7 @@ export default function StoreServicesPage() {
       });
       if (res.ok) {
         const json = await res.json();
-        setServices(json.data || []);
+        setServices(Array.isArray(json) ? json : (json.data || []));
       }
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ export default function StoreServicesPage() {
       const res = await fetch(`${API_BASE_URL}/catalogs/SERVICE_CATEGORIES`);
       if (res.ok) {
         const json = await res.json();
-        const items = json.data?.items || [];
+        const items = json.data?.items || json.items || [];
         setCategories(items);
         if (items.length > 0 && !editingId) {
           setForm(prev => ({ ...prev, categoryId: items[0].id }));

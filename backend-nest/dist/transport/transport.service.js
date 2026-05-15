@@ -49,30 +49,39 @@ let TransportService = class TransportService {
             action: 'trip.created',
             entityType: 'trip',
             entityId: saved.id.toString(),
-            details: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
+            metadata: { code: saved.tripCode, origin: saved.originName, destination: saved.destinationName }
         });
         return saved;
     }
     async updateTripStatus(id, status, user) {
-        const trip = await this.tripRepo.findOne({ where: { id } });
-        if (!trip)
-            throw new common_1.NotFoundException('Trip not found');
-        const oldStatus = trip.status;
-        trip.status = status;
-        if (status === 'IN_TRANSIT')
-            trip.actualPickupAt = new Date();
-        if (status === 'DELIVERED')
-            trip.actualDeliveryAt = new Date();
-        const updated = await this.tripRepo.save(trip);
-        await this.auditService.log({
-            user,
-            module: 'transport',
-            action: 'trip.status_changed',
-            entityType: 'trip',
-            entityId: id.toString(),
-            details: { oldStatus, newStatus: status }
-        });
-        return updated;
+        try {
+            const trip = await this.tripRepo.findOne({
+                where: { id },
+                relations: ['vehicle', 'driver', 'order', 'carrier']
+            });
+            if (!trip)
+                throw new common_1.NotFoundException(`Trip with ID ${id} not found`);
+            const oldStatus = trip.status;
+            trip.status = status;
+            if (status === 'IN_TRANSIT')
+                trip.actualPickupAt = new Date();
+            if (status === 'DELIVERED')
+                trip.actualDeliveryAt = new Date();
+            const updated = await this.tripRepo.save(trip);
+            await this.auditService.log({
+                user: { id: user.id },
+                module: 'transport',
+                action: 'trip.status_changed',
+                entityType: 'trip',
+                entityId: id.toString(),
+                metadata: { oldStatus, newStatus: status }
+            }).catch(err => console.error('Audit log failed:', err));
+            return updated;
+        }
+        catch (error) {
+            console.error('Error updating trip status:', error);
+            throw error;
+        }
     }
     async findAllVehicles() {
         return this.vehicleRepo.find({ relations: ['store'] });

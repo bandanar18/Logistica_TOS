@@ -98,7 +98,7 @@ let ReviewsService = class ReviewsService {
             action: 'review.created',
             entityType: 'review',
             entityId: saved.id.toString(),
-            details: { rating: saved.rating, storeId: store.id }
+            metadata: { rating: saved.rating, storeId: store.id }
         });
         return saved;
     }

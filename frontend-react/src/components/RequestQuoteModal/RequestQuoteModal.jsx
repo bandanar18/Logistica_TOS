@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Send, ClipboardList, Info, Calendar, Package, MapPin } from 'lucide-react';
 import './RequestQuoteModal.css';
 import { useAuth } from '../../context/AuthContext';
+import API_BASE_URL from '../../config/api';
 
 export default function RequestQuoteModal({ service, isOpen, onClose }) {
   const { token, isAuthenticated } = useAuth();
@@ -25,7 +26,7 @@ export default function RequestQuoteModal({ service, isOpen, onClose }) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/quotations', {
+      const res = await fetch(`${API_BASE_URL}/quotations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -232,6 +232,183 @@ const MODULE_CONFIG = {
   },
 };
 
+const FIELD_LABELS = {
+  quotationCode: 'Código',
+  orderCode: 'Código de Orden',
+  paymentCode: 'Código de Pago',
+  status: 'Estado',
+  subtotalAmount: 'Subtotal',
+  taxAmount: 'Impuestos',
+  commissionAmount: 'Comisión',
+  totalAmount: 'Total',
+  baseAmount: 'Monto Base',
+  amount: 'Monto',
+  quantity: 'Cantidad',
+  notes: 'Notas',
+  responseNotes: 'Notas del Proveedor',
+  createdAt: 'Fecha de Registro',
+  updatedAt: 'Última Actualización',
+  startedAt: 'Fecha de Inicio',
+  closedAt: 'Fecha de Cierre',
+  confirmedAt: 'Fecha de Confirmación',
+  legalName: 'Nombre Legal',
+  taxId: 'RIF/Tax ID',
+  basePort: 'Puerto Base',
+  description: 'Descripción',
+  sku: 'SKU',
+  originName: 'Origen',
+  destinationName: 'Destino',
+  tripCode: 'Código de Viaje',
+  currency: 'Moneda',
+  paymentMethod: 'Método de Pago',
+  paymentReference: 'Referencia',
+  receiptUrl: 'Comprobante (URL)',
+  rejectionReason: 'Motivo de Rechazo',
+  firstName: 'Nombre',
+  lastName: 'Apellido',
+  email: 'Correo Electrónico',
+  isActive: 'Estado de Cuenta',
+  phone: 'Teléfono',
+  address: 'Dirección',
+  warehouseName: 'Nombre Almacén',
+  warehouseCode: 'Código Almacén',
+  locationCode: 'Ubicación',
+  plateNumber: 'Placa/Patente',
+  vehicleType: 'Tipo de Vehículo',
+  driverCode: 'Código Chofer',
+  operationalStatus: 'Estado Operativo',
+  financialStatus: 'Estado Financiero',
+  documentStatus: 'Estado Documental',
+  respondedAt: 'Fecha de Respuesta',
+  approvedAt: 'Fecha de Aprobación',
+  rejectedAt: 'Fecha de Rechazo',
+  expiresAt: 'Fecha de Expiración',
+  name: 'Nombre',
+  code: 'Código',
+  basePrice: 'Precio Base',
+  billingUnit: 'Unidad de Facturación',
+  scope: 'Alcance del Servicio',
+  exclusions: 'Exclusiones',
+  slaHours: 'Horas de SLA (Respuesta)',
+  currencyCode: 'Moneda (Código)',
+  loadStatus: 'Estado de Carga',
+  containerNumber: 'Número de Contenedor',
+  moveType: 'Tipo de Movimiento',
+  fromLocation: 'Ubicación Origen',
+  toLocation: 'Ubicación Destino',
+  tripType: 'Tipo de Viaje',
+  quantity: 'Cantidad / Unidades',
+  subtotalAmount: 'Monto Subtotal',
+  taxAmount: 'Impuesto (IVA)',
+  commissionAmount: 'Comisión Marketplace',
+  totalAmount: 'Monto Total',
+  paymentMethod: 'Forma de Pago',
+  paymentReference: 'Número de Referencia',
+};
+
+function formatValue(key, value) {
+  if (value === null || value === undefined) return '—';
+  
+  // Technical constants mapping
+  const CONSTANTS_MAP = {
+    BANK_TRANSFER: 'Transferencia Bancaria',
+    CASH: 'Efectivo',
+    CREDIT_CARD: 'Tarjeta de Crédito',
+    ZELLE: 'Zelle',
+    PENDING: 'Pendiente',
+    ACTIVE: 'Activo',
+    INACTIVE: 'Inactivo',
+    TRUCK: 'Camión / Remolque',
+    VAN: 'Furgoneta',
+    BONDED: 'Fiscal / Aduanero',
+    GENERAL: 'General',
+    SERVICE: 'Por Servicio',
+    TRIP: 'Por Viaje',
+    TON: 'Toneladas',
+    CONTAINER: 'Por Contenedor',
+    SHIPMENT: 'Por Embarque',
+    USD: 'Dólares (USD)',
+    VESSEL: 'Buque / Navío',
+    PORT: 'Puerto',
+    YARD: 'Patio de Contenedores',
+  };
+
+  if (CONSTANTS_MAP[value]) return CONSTANTS_MAP[value];
+
+  if (key.toLowerCase().includes('amount') || key === 'amount' || key === 'price' || key === 'basePrice' || key === 'total') {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+  }
+  if (key.toLowerCase().includes('at') || key === 'createdAt' || key === 'updatedAt' || key === 'date') {
+    try {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return value;
+      return date.toLocaleString();
+    } catch {
+      return value;
+    }
+  }
+  if (typeof value === 'boolean') return value ? 'Activo' : 'Inactivo';
+  return String(value);
+}
+
+function ViewModal({ item, module, onClose }) {
+  if (!item) return null;
+  const config = MODULE_CONFIG[module];
+
+  const renderSection = (title, data) => (
+    <div className="view-section" style={{ marginBottom: 'var(--space-6)' }}>
+      <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-border)', paddingBottom: '4px' }}>
+        {title}
+      </h4>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+        {Object.entries(data).map(([key, value]) => {
+          if (key.toLowerCase().includes('id') || key.toLowerCase().includes('hash') || key === 'passwordHash') return null;
+          if (typeof value === 'object' && value !== null) return null;
+          return (
+            <div key={key}>
+              <span className="text-xs text-muted" style={{ fontWeight: 600, display: 'block', marginBottom: '2px' }}>{FIELD_LABELS[key] || key}</span>
+              <span style={{ fontSize: '0.9375rem', color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                {key === 'status' || key === 'operationalStatus' || key === 'financialStatus' ? (
+                  <span className={`badge ${STATUS_MAP[value]?.badge || 'badge-muted'}`}>{STATUS_MAP[value]?.label || value}</span>
+                ) : formatValue(key, value)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{config?.title || 'Detalles'}</h3>
+            <p className="text-xs text-muted">ID Interno: {item.id}</p>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          {/* Main Info */}
+          {renderSection('Información General', item)}
+
+          {/* Related Objects */}
+          {item.service && renderSection('Servicio Contratado', item.service)}
+          {item.store && renderSection('Proveedor / Tienda', item.store)}
+          {item.client && module !== 'users' && renderSection('Información del Cliente', item.client)}
+          
+          {/* Order Specifics */}
+          {item.quotation && renderSection('Cotización de Origen', item.quotation)}
+        </div>
+        <div className="modal-footer" style={{ position: 'sticky', bottom: 0, background: 'white', zIndex: 10 }}>
+          <button className="btn btn-primary" style={{ width: '100%' }} onClick={onClose}>Entendido</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ActionModal({ action, item, onClose, onSubmit }) {
   const [form, setForm] = useState({
     price: '',
@@ -352,6 +529,7 @@ export default function GenericDashPage({ title, role, module }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [viewingItem, setViewingItem] = useState(null);
   const [processingKey, setProcessingKey] = useState(null);
   const config = MODULE_CONFIG[module] || { title, cols: ['En construcción'], mapRow: () => ['—'] };
 
@@ -533,7 +711,7 @@ export default function GenericDashPage({ title, role, module }) {
                     ))}
                     <td style={{ padding: 'var(--space-4) var(--space-5)', textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-                        <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>Ver</button>
+                        <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => setViewingItem(data[ri])}>Ver</button>
                         {getActions(data[ri]).map(action => (
                           <button key={action} className="btn btn-secondary btn-sm" style={{ padding: '4px 8px', fontSize: '0.75rem' }} disabled={!!processingKey} onClick={() => runAction(action, data[ri])}>
                             {processingKey === `${module}-${data[ri].id}-${action}` ? 'Procesando...' : action}
@@ -564,6 +742,7 @@ export default function GenericDashPage({ title, role, module }) {
           </div>
         </div>
         <ActionModal action={modal?.action} item={modal?.item} onClose={() => setModal(null)} onSubmit={submitModal} />
+        <ViewModal item={viewingItem} module={module} onClose={() => setViewingItem(null)} />
       </div>
     </DashboardLayout>
   );

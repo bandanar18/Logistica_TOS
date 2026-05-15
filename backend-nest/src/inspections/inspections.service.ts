@@ -30,7 +30,7 @@ export class InspectionsService {
       action: 'inspection.created',
       entityType: 'inspection',
       entityId: saved.id.toString(),
-      details: { type: saved.inspectionType }
+      metadata: { type: saved.inspectionType }
     });
     
     return saved;
@@ -55,7 +55,7 @@ export class InspectionsService {
       action: 'inspection.result.created',
       entityType: 'inspection',
       entityId: id.toString(),
-      details: { verdict: savedResult.verdict }
+      metadata: { verdict: savedResult.verdict }
     });
 
     return savedResult;

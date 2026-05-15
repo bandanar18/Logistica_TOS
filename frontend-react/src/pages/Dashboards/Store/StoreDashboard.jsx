@@ -13,14 +13,16 @@ export default function StoreDashboard() {
   const { user, token } = useAuth();
   const [quotations, setQuotations] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [resQ, resO] = await Promise.all([
+        const [resQ, resO, resS] = await Promise.all([
           fetch(`${API_BASE_URL}/quotations`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/reports/store-dashboard`, { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
         if (resQ.ok) {
           const json = await resQ.json();
@@ -29,6 +31,10 @@ export default function StoreDashboard() {
         if (resO.ok) {
           const json = await resO.json();
           setOrders(json.data || []);
+        }
+        if (resS.ok) {
+          const json = await resS.json();
+          setStats(json.data);
         }
       } catch (err) {
         console.error(err);
@@ -53,10 +59,10 @@ export default function StoreDashboard() {
 
       <div className="stats-grid">
         {[
-          { icon: <FileText size={22} />, label: 'Solicitudes', value: quotations.length, change: `${quotations.filter(q=>q.status==='REQUESTED').length} sin responder`, color: 'var(--color-warning)' },
-          { icon: <ClipboardList size={22} />, label: 'Órdenes activas', value: orders.filter(o=>o.operationalStatus!=='CLOSED' && o.operationalStatus!=='CANCELLED').length, change: 'En ejecución', color: 'var(--color-info)' },
-          { icon: <CreditCard size={22} />, label: 'Ingresos este mes', value: '$0', change: 'USD', color: 'var(--color-success)' },
-          { icon: <Star size={22} />, label: 'Calificación', value: '5.0/5', change: 'Nueva tienda', color: 'var(--color-accent)' },
+          { icon: <FileText size={22} />, label: 'Solicitudes', value: stats?.quotationsCount || 0, change: `Histórico total`, color: 'var(--color-warning)' },
+          { icon: <ClipboardList size={22} />, label: 'Órdenes activas', value: stats?.activeOrdersCount || 0, change: 'En ejecución', color: 'var(--color-info)' },
+          { icon: <CreditCard size={22} />, label: 'Ingresos Conf.', value: `$${(stats?.totalCommissions || 0).toLocaleString()}`, change: 'USD (Neto)', color: 'var(--color-success)' },
+          { icon: <Star size={22} />, label: 'Calificación', value: `${stats?.storeRating || 5.0}/5`, change: 'Basado en servicios', color: 'var(--color-accent)' },
         ].map((s, i) => (
           <div key={i} className="stat-card">
             <div className="stat-card-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>

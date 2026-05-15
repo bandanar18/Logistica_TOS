@@ -119,7 +119,7 @@ export class OrdersService {
     });
 
     // If it's a transport order, create a trip
-    if (o.service?.category?.itemCode === 'TRANSPORT_SERVICE') {
+    if (o.service?.category?.code === 'TRANSPORT') {
        await this.transportService.createTrip({
           order: saved,
           carrier: o.store,

@@ -8,4 +8,5 @@ export declare class StorageController {
         toLocationId: number;
     }, req: any): Promise<import("./entities/inventory-item.entity").InventoryItem>;
     findAllWarehouses(): Promise<import("./entities/warehouse.entity").Warehouse[]>;
+    findAllLocations(id: string): Promise<import("./entities/storage-location.entity").StorageLocation[]>;
 }

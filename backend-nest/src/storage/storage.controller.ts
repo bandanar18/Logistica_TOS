@@ -30,4 +30,9 @@ export class StorageController {
   findAllWarehouses() {
     return this.storageService.findAllWarehouses();
   }
+
+  @Get('warehouses/:id/locations')
+  findAllLocations(@Param('id') id: string) {
+    return this.storageService.findAllLocations(+id);
+  }
 }

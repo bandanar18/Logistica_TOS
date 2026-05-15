@@ -88,13 +88,14 @@ let QuotationsService = class QuotationsService {
         const qb = this.quotationsRepository.createQueryBuilder('q')
             .leftJoinAndSelect('q.client', 'client')
             .leftJoinAndSelect('q.store', 'store')
+            .leftJoinAndSelect('store.owner', 'owner')
             .leftJoinAndSelect('q.service', 'service')
             .leftJoinAndSelect('q.unitMeasure', 'unitMeasure')
             .orderBy('q.createdAt', 'DESC');
         if (user.role === 'admin') {
         }
         else if (user.role === 'store') {
-            qb.where('store.ownerId = :ownerId', { ownerId: this.userId(user) });
+            qb.where('owner.id = :ownerId', { ownerId: this.userId(user) });
         }
         else {
             qb.where('client.id = :clientId', { clientId: this.userId(user) });
@@ -144,7 +145,7 @@ let QuotationsService = class QuotationsService {
         const subtotal = Number(respondDto.price);
         if (isNaN(subtotal) || subtotal <= 0)
             throw new common_1.BadRequestException('A valid price is required');
-        const category = q.service?.category?.itemCode;
+        const category = q.service?.category?.code;
         const rule = await this.commissionRulesService.findBestRule(category, q.store?.id);
         const oldValues = { status: q.status, price: q.subtotalAmount };
         q.subtotalAmount = subtotal;

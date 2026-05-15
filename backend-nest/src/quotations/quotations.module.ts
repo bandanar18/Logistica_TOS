@@ -7,10 +7,11 @@ import { OrdersModule } from '../orders/orders.module';
 import { Store } from '../stores/entities/store.entity';
 import { Service } from '../services/entities/service.entity';
 import { CommissionRulesModule } from '../commission_rules/commission_rules.module';
+import { MasterCatalogItem } from '../catalogs/entities/master-catalog-item.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Quotation, Store, Service]),
+    TypeOrmModule.forFeature([Quotation, Store, Service, MasterCatalogItem]),
     OrdersModule,
     CommissionRulesModule,
   ],

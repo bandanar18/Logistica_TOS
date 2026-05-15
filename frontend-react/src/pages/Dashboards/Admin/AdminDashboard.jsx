@@ -30,10 +30,17 @@ export default function AdminDashboard() {
 
       if (pRes.ok) {
         const json = await pRes.json();
-        setPayments(json.filter(p => p.status === 'SUBMITTED' || p.status === 'IN_REVIEW') || []);
+        const items = json.data || [];
+        setPayments(items.filter(p => p.status === 'SUBMITTED' || p.status === 'IN_REVIEW'));
       }
-      if (aRes.ok) setAuditLogs(await aRes.json());
-      if (sRes.ok) setSummary(await sRes.json());
+      if (aRes.ok) {
+        const json = await aRes.json();
+        setAuditLogs(json.data || []);
+      }
+      if (sRes.ok) {
+        const json = await sRes.json();
+        setSummary(json.data);
+      }
 
     } catch (err) {
       console.error(err);
@@ -75,12 +82,12 @@ export default function AdminDashboard() {
       {/* Global Stats */}
       <div className="admin-stats-grid">
         {[
-          { icon: <Users size={22} />, label: 'Clientes registrados', value: MOCK_REPORTS_SUMMARY.totalClients, change: '+23 este mes', up: true, color: 'var(--color-primary)' },
-          { icon: <Store size={22} />, label: 'Tiendas activas', value: MOCK_REPORTS_SUMMARY.activeStores, change: `${MOCK_REPORTS_SUMMARY.totalStores} total`, up: true, color: 'var(--color-info)' },
-          { icon: <ClipboardList size={22} />, label: 'Órdenes totales', value: MOCK_REPORTS_SUMMARY.totalOrders.toLocaleString(), change: `${MOCK_REPORTS_SUMMARY.activeOrders} activas`, up: true, color: 'var(--color-success)' },
-          { icon: <CreditCard size={22} />, label: 'Ingresos (USD)', value: `$${(MOCK_REPORTS_SUMMARY.totalRevenue/1000).toFixed(0)}K`, change: '+18% vs mes anterior', up: true, color: 'var(--color-accent)' },
-          { icon: <Percent size={22} />, label: 'Comisiones', value: `$${(MOCK_REPORTS_SUMMARY.totalCommissions/1000).toFixed(0)}K`, change: '10% promedio', up: true, color: 'var(--color-warning)' },
-          { icon: <TrendingUp size={22} />, label: 'Calificación prom.', value: `${MOCK_REPORTS_SUMMARY.avgRating}/5`, change: '+0.1 este mes', up: true, color: '#7B1FA2' },
+          { icon: <Users size={22} />, label: 'Usuarios registrados', value: summary?.kpis?.users || 0, change: '+1 hoy', up: true, color: 'var(--color-primary)' },
+          { icon: <Store size={22} />, label: 'Tiendas activas', value: summary?.kpis?.activeStores || 0, change: 'En el ecosistema', up: true, color: 'var(--color-info)' },
+          { icon: <ClipboardList size={22} />, label: 'Órdenes en ejecución', value: summary?.kpis?.executingOrders || 0, change: 'Activas ahora', up: true, color: 'var(--color-success)' },
+          { icon: <CreditCard size={22} />, label: 'Ingresos Conf. (USD)', value: `$${(summary?.kpis?.confirmedRevenue || 0).toLocaleString()}`, change: 'Confirmado', up: true, color: 'var(--color-accent)' },
+          { icon: <Percent size={22} />, label: 'Comisiones Conf.', value: `$${(summary?.kpis?.marketplaceCommissions || 0).toLocaleString()}`, change: 'Ingreso Marketplace', up: true, color: 'var(--color-warning)' },
+          { icon: <TrendingUp size={22} />, label: 'Viajes en curso', value: summary?.kpis?.tripsInProgress || 0, change: 'Transporte activo', up: true, color: '#7B1FA2' },
         ].map((s, i) => (
           <div key={i} className="stat-card">
             <div className="stat-card-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
@@ -122,24 +129,28 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Recent Audit */}
+        {/* Real Audit (Doc 27) */}
         <div className="dash-section">
           <div className="section-header">
-            <h3 className="section-title" style={{ fontSize: '1rem' }}>Auditoría reciente</h3>
+            <h3 className="section-title" style={{ fontSize: '1rem' }}>Auditoría real (Doc 27)</h3>
             <Link to="/admin/audit" className="btn btn-ghost btn-sm">Ver todo</Link>
           </div>
           <div className="dash-table">
-            {MOCK_AUDIT_LOGS.slice(0, 5).map(log => (
+            {auditLogs.length === 0 ? <p className="p-4 text-sm text-muted">No hay logs registrados.</p> :
+              auditLogs.slice(0, 8).map(log => (
               <div key={log.id} className="dash-table-row">
                 <div>
                   <p className="font-semibold text-sm">{log.action}</p>
-                  <p className="text-xs text-muted">{log.user} · {log.module}</p>
+                  <p className="text-xs text-muted">{log.user?.firstName || 'System'} · {log.module} · {log.entityCode}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`badge ${log.result === 'Éxito' ? 'badge-success' : 'badge-danger'}`}>
-                    {log.result}
+                  <span className={`badge ${
+                    log.severity === 'CRITICAL' ? 'badge-danger' : 
+                    log.severity === 'HIGH' ? 'badge-warning' : 'badge-info'
+                  }`}>
+                    {log.severity}
                   </span>
-                  <p className="text-xs text-muted mt-1">{log.date.split(' ')[1]}</p>
+                  <p className="text-xs text-muted mt-1">{new Date(log.createdAt).toLocaleTimeString()}</p>
                 </div>
               </div>
             ))}

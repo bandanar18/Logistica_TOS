@@ -79,6 +79,7 @@ export class QuotationsService {
     const qb = this.quotationsRepository.createQueryBuilder('q')
       .leftJoinAndSelect('q.client', 'client')
       .leftJoinAndSelect('q.store', 'store')
+      .leftJoinAndSelect('store.owner', 'owner')
       .leftJoinAndSelect('q.service', 'service')
       .leftJoinAndSelect('q.unitMeasure', 'unitMeasure')
       .orderBy('q.createdAt', 'DESC');
@@ -86,7 +87,7 @@ export class QuotationsService {
     if (user.role === 'admin') {
       // Return all
     } else if (user.role === 'store') {
-      qb.where('store.ownerId = :ownerId', { ownerId: this.userId(user) });
+      qb.where('owner.id = :ownerId', { ownerId: this.userId(user) });
     } else {
       qb.where('client.id = :clientId', { clientId: this.userId(user) });
     }
@@ -141,7 +142,7 @@ export class QuotationsService {
     if (isNaN(subtotal) || subtotal <= 0) throw new BadRequestException('A valid price is required');
     
     // Dynamic commission calculation
-    const category = q.service?.category?.itemCode;
+    const category = q.service?.category?.code;
     const rule = await this.commissionRulesService.findBestRule(category, q.store?.id);
     
     const oldValues = { status: q.status, price: q.subtotalAmount };

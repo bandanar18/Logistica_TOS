@@ -56,7 +56,7 @@ let DocumentsService = class DocumentsService {
             action: 'document.uploaded',
             entityType: 'document',
             entityId: saved.id.toString(),
-            details: { orderId: order.id, type: data.type },
+            metadata: { orderId: order.id, type: data.type },
         });
         return saved;
     }

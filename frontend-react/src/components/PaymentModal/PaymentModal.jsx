@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, CreditCard, Upload, Send, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import API_BASE_URL from '../../config/api';
 import './PaymentModal.css';
 
 export default function PaymentModal({ order, isOpen, onClose }) {
@@ -20,7 +21,7 @@ export default function PaymentModal({ order, isOpen, onClose }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/payments', {
+      const res = await fetch(`${API_BASE_URL}/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

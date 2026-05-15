@@ -33,6 +33,9 @@ let StorageController = class StorageController {
     findAllWarehouses() {
         return this.storageService.findAllWarehouses();
     }
+    findAllLocations(id) {
+        return this.storageService.findAllLocations(+id);
+    }
 };
 exports.StorageController = StorageController;
 __decorate([
@@ -64,6 +67,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StorageController.prototype, "findAllWarehouses", null);
+__decorate([
+    (0, common_1.Get)('warehouses/:id/locations'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StorageController.prototype, "findAllLocations", null);
 exports.StorageController = StorageController = __decorate([
     (0, common_1.Controller)('storage'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

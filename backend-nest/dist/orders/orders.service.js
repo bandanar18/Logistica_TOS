@@ -120,7 +120,7 @@ let OrdersService = class OrdersService {
             newValues: { status: saved.operationalStatus },
             severity: 'MEDIUM'
         });
-        if (o.service?.category?.itemCode === 'TRANSPORT_SERVICE') {
+        if (o.service?.category?.code === 'TRANSPORT') {
             await this.transportService.createTrip({
                 order: saved,
                 carrier: o.store,
